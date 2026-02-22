@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/friend_model.dart';
@@ -28,6 +33,7 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   bool _showTasks = false;
+  bool _isUploadingImage = false;
 
   String get _chatId => FriendMessageModel.buildChatId(
       FirebaseAuth.instance.currentUser?.uid ?? '', widget.friendUid);
@@ -84,7 +90,7 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
 
     await ref.read(friendChatNotifierProvider.notifier).sendMessage(msg);
 
-    // Local push notification simulation (to show the feature)
+    // Local push notification simulation
     _triggerLocalNotification(
       title: 'New message from ${user.displayName ?? "You"}',
       body: text,
@@ -92,6 +98,174 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
+
+  Future<void> _showAttachmentMenu() async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const Text('Send Attachment', style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
+              )),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                ),
+                title: const Text('Camera', style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () => Navigator.pop(ctx, 'camera'),
+              ),
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: AppColors.accent),
+                ),
+                title: const Text('Gallery', style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () => Navigator.pop(ctx, 'gallery'),
+              ),
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF05252).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.insert_drive_file_rounded, color: Color(0xFFF05252)),
+                ),
+                title: const Text('File (PDF, DOC, etc.)', style: TextStyle(fontWeight: FontWeight.w700)),
+                onTap: () => Navigator.pop(ctx, 'file'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (choice == null) return;
+    if (choice == 'camera') {
+      await _sendImage(ImageSource.camera);
+    } else if (choice == 'gallery') {
+      await _sendImage(ImageSource.gallery);
+    } else if (choice == 'file') {
+      await _sendFile();
+    }
+  }
+
+  Future<void> _sendImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: source,
+      imageQuality: 75,
+      maxWidth: 1200,
+    );
+
+    if (picked == null) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final imageUrl = await ref
+          .read(friendRepositoryProvider)
+          .uploadChatImage(_chatId, File(picked.path));
+
+      final msg = FriendMessageModel(
+        id: '',
+        chatId: _chatId,
+        senderId: user.uid,
+        senderName: user.displayName ?? user.email ?? 'Me',
+        text: '📷 Photo',
+        timestamp: DateTime.now(),
+        imageUrl: imageUrl,
+        messageType: 'image',
+      );
+
+      await ref.read(friendChatNotifierProvider.notifier).sendMessage(msg);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send image: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  Future<void> _sendFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.any,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.first;
+    if (picked.path == null) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final originalName = picked.name;
+    final fileSize = picked.size;
+
+    setState(() => _isUploadingImage = true);
+    try {
+      final fileUrl = await ref
+          .read(friendRepositoryProvider)
+          .uploadChatFile(_chatId, File(picked.path!), originalName);
+
+      final msg = FriendMessageModel(
+        id: '',
+        chatId: _chatId,
+        senderId: user.uid,
+        senderName: user.displayName ?? user.email ?? 'Me',
+        text: '📎 $originalName',
+        timestamp: DateTime.now(),
+        messageType: 'file',
+        fileUrl: fileUrl,
+        fileName: originalName,
+        fileSize: fileSize,
+      );
+
+      await ref.read(friendChatNotifierProvider.notifier).sendMessage(msg);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send file: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
 
   void _triggerLocalNotification({required String title, required String body}) {
     const androidDetails = AndroidNotificationDetails(
@@ -114,47 +288,52 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
     final messagesAsync = ref.watch(friendMessagesProvider(_chatId));
     final friend = widget.friend;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(friend),
-            if (_showTasks) _SharedTasksPanel(
-              myUid: me?.uid ?? '',
-              friendUid: widget.friendUid,
-            ),
-            Expanded(
-              child: messagesAsync.when(
-                data: (msgs) {
-                  WidgetsBinding.instance
-                      .addPostFrameCallback((_) => _scrollToBottom());
-                  if (msgs.isEmpty) return _buildEmptyChat();
-                  return ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                    itemCount: msgs.length,
-                    itemBuilder: (context, i) {
-                      final msg = msgs[i];
-                      final isMe = msg.senderId == me?.uid;
-                      final showDate = i == 0 ||
-                          !_isSameDay(msgs[i - 1].timestamp, msg.timestamp);
-                      return Column(
-                        children: [
-                          if (showDate) _DateDivider(date: msg.timestamp),
-                          _MessageBubble(msg: msg, isMe: isMe),
-                        ],
-                      );
-                    },
-                  );
-                },
-                loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary)),
-                error: (e, _) => Center(child: Text('Error: $e')),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.bgColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(friend),
+              if (_showTasks) _SharedTasksPanel(
+                myUid: me?.uid ?? '',
+                friendUid: widget.friendUid,
               ),
-            ),
-            _buildInputBar(),
-          ],
+              Expanded(
+                child: messagesAsync.when(
+                  data: (msgs) {
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _scrollToBottom());
+                    if (msgs.isEmpty) return _buildEmptyChat();
+                    return ListView.builder(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      itemCount: msgs.length,
+                      itemBuilder: (context, i) {
+                        final msg = msgs[i];
+                        final isMe = msg.senderId == me?.uid;
+                        final showDate = i == 0 ||
+                            !_isSameDay(msgs[i - 1].timestamp, msg.timestamp);
+                        return Column(
+                          children: [
+                            if (showDate) _DateDivider(date: msg.timestamp),
+                            _MessageBubble(msg: msg, isMe: isMe),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  loading: () => const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary)),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                ),
+              ),
+              _buildInputBar(),
+            ],
+          ),
         ),
       ),
     );
@@ -237,51 +416,93 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
 
   Widget _buildInputBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       decoration: BoxDecoration(
         color: AppColors.surfaceColor,
         boxShadow: _invertedShadows(),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(
+          // Attachment button
+          GestureDetector(
+            onTap: _isUploadingImage ? null : _showAttachmentMenu,
             child: Container(
+              width: 44, height: 44,
+              margin: const EdgeInsets.only(right: 8, bottom: 4),
               decoration: BoxDecoration(
-                color: AppColors.bgColor,
-                borderRadius: BorderRadius.circular(24),
+                color: _isUploadingImage
+                    ? AppColors.textSecondary.withValues(alpha: 0.15)
+                    : AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: TextField(
-                controller: _msgCtrl,
-                maxLines: 3,
-                minLines: 1,
-                onSubmitted: (_) => _sendMessage(),
-                textInputAction: TextInputAction.send,
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: _isUploadingImage
+                  ? const Padding(
+                      padding: EdgeInsets.all(10),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                    )
+                  : const Icon(Icons.add_photo_alternate_rounded,
+                      size: 22, color: AppColors.primary),
+            ),
+          ),
+          // Text input
+          Expanded(
+            child: TextField(
+              controller: _msgCtrl,
+              maxLines: 3,
+              minLines: 1,
+              onSubmitted: (_) => _sendMessage(),
+              textInputAction: TextInputAction.send,
+              cursorColor: AppColors.primary,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontSize: 15,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Type a message...',
+                hintStyle: TextStyle(
+                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
                 ),
-                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 15),
+                filled: true,
+                fillColor: AppColors.bgColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
+          // Send button
           GestureDetector(
             onTap: _sendMessage,
             child: Container(
-              width: 52, height: 52,
+              width: 48, height: 48,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppColors.primary, AppColors.secondary],
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 12, offset: const Offset(0, 4),
+                  ),
                 ],
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 22),
+              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -325,6 +546,9 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isImage = msg.messageType == 'image' && msg.imageUrl != null;
+    final isFile = msg.messageType == 'file' && msg.fileUrl != null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -339,7 +563,9 @@ class _MessageBubble extends StatelessWidget {
             child: Column(
               crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                Container(
+                if (isImage) _ImageBubble(imageUrl: msg.imageUrl!, isMe: isMe)
+                else if (isFile) _FileBubble(msg: msg, isMe: isMe)
+                else Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.72,
                   ),
@@ -392,6 +618,208 @@ class _MessageBubble extends StatelessWidget {
           ),
           if (isMe) const SizedBox(width: 8),
         ],
+      ),
+    );
+  }
+}
+
+class _ImageBubble extends StatelessWidget {
+  final String imageUrl;
+  final bool isMe;
+  const _ImageBubble({required this.imageUrl, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(imageUrl, fit: BoxFit.contain),
+              ),
+              Positioned(
+                top: 8, right: 8,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(20),
+          topRight: const Radius.circular(20),
+          bottomLeft: Radius.circular(isMe ? 20 : 4),
+          bottomRight: Radius.circular(isMe ? 4 : 20),
+        ),
+        child: Image.network(
+          imageUrl,
+          width: 220,
+          height: 200,
+          fit: BoxFit.cover,
+          loadingBuilder: (ctx, child, progress) {
+            if (progress == null) return child;
+            return Container(
+              width: 220, height: 200,
+              color: AppColors.bgColor,
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: progress.expectedTotalBytes != null
+                      ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                      : null,
+                  color: AppColors.primary,
+                  strokeWidth: 2,
+                ),
+              ),
+            );
+          },
+          errorBuilder: (_, __, ___) => Container(
+            width: 220, height: 100,
+            color: AppColors.bgColor,
+            child: const Center(
+              child: Icon(Icons.broken_image_rounded, color: AppColors.textSecondary, size: 36),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _FileBubble extends StatelessWidget {
+  final FriendMessageModel msg;
+  final bool isMe;
+  const _FileBubble({required this.msg, required this.isMe});
+
+  String get _ext {
+    final name = msg.fileName ?? '';
+    final parts = name.split('.');
+    return parts.length > 1 ? parts.last.toUpperCase() : 'FILE';
+  }
+
+  String get _sizeLabel {
+    final bytes = msg.fileSize ?? 0;
+    if (bytes < 1024) return '${bytes}B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+  }
+
+  Color get _extColor {
+    switch (_ext) {
+      case 'PDF': return const Color(0xFFF05252);
+      case 'DOC': case 'DOCX': return const Color(0xFF3B82F6);
+      case 'XLS': case 'XLSX': return const Color(0xFF10B981);
+      case 'PPT': case 'PPTX': return const Color(0xFFF59E0B);
+      case 'ZIP': case 'RAR': return const Color(0xFF8A94A6);
+      default: return AppColors.primary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        if (msg.fileUrl != null) {
+          final uri = Uri.parse(msg.fileUrl!);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        }
+      },
+      child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: isMe
+              ? const LinearGradient(
+                  colors: [AppColors.primary, Color(0xFF7C7DFF)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                )
+              : null,
+          color: isMe ? null : AppColors.surfaceColor,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(20),
+            topRight: const Radius.circular(20),
+            bottomLeft: Radius.circular(isMe ? 20 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 20),
+          ),
+          boxShadow: isMe ? [
+            BoxShadow(color: AppColors.primary.withValues(alpha: 0.22), blurRadius: 12, offset: const Offset(0, 4)),
+          ] : AppTheme.softShadows,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44, height: 44,
+              decoration: BoxDecoration(
+                color: isMe
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : _extColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(_ext.length > 4 ? _ext.substring(0, 4) : _ext,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: isMe ? Colors.white : _extColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    msg.fileName ?? 'File',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isMe ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _sizeLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isMe ? Colors.white.withValues(alpha: 0.75) : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 18,
+              color: isMe ? Colors.white.withValues(alpha: 0.85) : AppColors.primary,
+            ),
+          ],
+        ),
       ),
     );
   }

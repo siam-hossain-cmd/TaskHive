@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/friend_repository.dart';
 import '../../domain/models/friend_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../core/services/api_service.dart';
 
 // ── Repository ────────────────────────────────────────────────────────────────
 final friendRepositoryProvider = Provider<FriendRepository>((ref) {
-  return FriendRepository();
+  final apiService = ref.read(apiServiceProvider);
+  return FriendRepository(apiService: apiService);
 });
 
 // ── Current UID helper ─────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 const express = require('express');
 const { messaging, db, auth } = require('../firebase');
-const { authenticateAdmin } = require('../middleware/auth');
+const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -90,6 +90,36 @@ router.post('/register-token', async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Failed to register token' });
+    }
+});
+
+// POST /api/notifications/user-to-user — Send notification from one user to another
+router.post('/user-to-user', authenticateUser, async (req, res) => {
+    try {
+        const { targetUid, title, body, payload } = req.body;
+
+        if (!targetUid || !title || !body) {
+            return res.status(400).json({ error: 'targetUid, title, and body are required' });
+        }
+
+        const userDoc = await db.collection('users').doc(targetUid).get();
+        const fcmToken = userDoc.data()?.fcmToken;
+
+        if (!fcmToken) {
+            // It's not necessarily an error if they don't have a token, just that we can't notify them.
+            return res.status(200).json({ success: false, message: 'User has no FCM token' });
+        }
+
+        await messaging.send({
+            token: fcmToken,
+            notification: { title, body },
+            data: payload || { type: 'user_notification' },
+        });
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to send user notification', details: err.message });
     }
 });
 

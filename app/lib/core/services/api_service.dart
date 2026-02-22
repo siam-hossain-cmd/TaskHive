@@ -46,6 +46,34 @@ class ApiService {
     }
   }
 
+  Future<void> sendUserNotification({
+    required String targetUid,
+    required String title,
+    required String body,
+    Map<String, dynamic>? payload,
+  }) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('$_baseUrl/notifications/user-to-user');
+    
+    try {
+      final res = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode({
+          'targetUid': targetUid,
+          'title': title,
+          'body': body,
+          if (payload != null) 'payload': payload,
+        }),
+      );
+      if (res.statusCode != 200) {
+        print('Backend API Error: Failed to send user notification ${res.body}');
+      }
+    } catch (e) {
+      print('Backend API Error: $e');
+    }
+  }
+
   // You can route other functions here later (like sending push notifications to friends)
 }
 

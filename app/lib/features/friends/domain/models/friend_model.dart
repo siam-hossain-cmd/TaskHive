@@ -166,6 +166,11 @@ class FriendMessageModel {
   final String text;
   final DateTime timestamp;
   final bool isRead;
+  final String? imageUrl; // for image messages
+  final String? messageType; // 'text' | 'image' | 'file'
+  final String? fileUrl;   // for file messages
+  final String? fileName;  // original file name
+  final int? fileSize;     // bytes
 
   FriendMessageModel({
     required this.id,
@@ -175,6 +180,11 @@ class FriendMessageModel {
     required this.text,
     required this.timestamp,
     this.isRead = false,
+    this.imageUrl,
+    this.messageType = 'text',
+    this.fileUrl,
+    this.fileName,
+    this.fileSize,
   });
 
   factory FriendMessageModel.fromFirestore(DocumentSnapshot doc) {
@@ -187,6 +197,11 @@ class FriendMessageModel {
       text: data['text'] ?? '',
       timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
       isRead: data['isRead'] ?? false,
+      imageUrl: data['imageUrl'],
+      messageType: data['messageType'] ?? 'text',
+      fileUrl: data['fileUrl'],
+      fileName: data['fileName'],
+      fileSize: data['fileSize'],
     );
   }
 
@@ -197,6 +212,11 @@ class FriendMessageModel {
     'text': text,
     'timestamp': Timestamp.fromDate(timestamp),
     'isRead': isRead,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+    'messageType': messageType ?? 'text',
+    if (fileUrl != null) 'fileUrl': fileUrl,
+    if (fileName != null) 'fileName': fileName,
+    if (fileSize != null) 'fileSize': fileSize,
   };
 
   /// Build a stable chat ID from two UIDs (alphabetical sort)

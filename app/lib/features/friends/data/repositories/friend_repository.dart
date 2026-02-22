@@ -1,15 +1,41 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../domain/models/friend_model.dart';
+import '../../../../core/services/api_service.dart';
 
 class FriendRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ApiService? apiService;
+
+  FriendRepository({this.apiService});
 
   // ── Collection refs ─────────────────────────────────────────────────────────
   CollectionReference get _friendsRef => _firestore.collection('friends');
   CollectionReference get _requestsRef => _firestore.collection('friend_requests');
   CollectionReference get _messagesRef => _firestore.collection('friend_messages');
   CollectionReference get _usersRef => _firestore.collection('users');
+
+  // ── Image Upload ─────────────────────────────────────────────────────────────
+  Future<String> uploadChatImage(String chatId, File file) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final ref = FirebaseStorage.instance
+        .ref('chat_images/$chatId/$uid/$fileName');
+    await ref.putFile(file);
+    return await ref.getDownloadURL();
+  }
+
+  // ── File Upload ───────────────────────────────────────────────────────────────
+  Future<String> uploadChatFile(String chatId, File file, String fileName) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+    final safeFileName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    final ref = FirebaseStorage.instance
+        .ref('chat_files/$chatId/$uid/$safeFileName');
+    await ref.putFile(file);
+    return await ref.getDownloadURL();
+  }
 
   // ── User search ─────────────────────────────────────────────────────────────
   Future<List<UserProfile>> searchUsers(String query) async {
@@ -88,6 +114,15 @@ class FriendRepository {
       fromPhotoUrl: fromPhotoUrl,
       createdAt: DateTime.now(),
     ).toFirestore());
+
+    if (apiService != null) {
+      await apiService!.sendUserNotification(
+        targetUid: toUid,
+        title: 'New Friend Request',
+        body: '$fromName sent you a friend request.',
+        payload: {'type': 'friend_request', 'fromUid': fromUid},
+      );
+    }
   }
 
   Stream<List<FriendRequestModel>> getIncomingRequests(String uid) {
@@ -154,6 +189,15 @@ class FriendRepository {
       fcmToken: toFcmToken,
       connectedAt: now,
     ).toFirestore());
+
+    if (apiService != null) {
+      await apiService!.sendUserNotification(
+        targetUid: req.fromUid,
+        title: 'Friend Request Accepted',
+        body: '$toName accepted your friend request.',
+        payload: {'type': 'friend_accept', 'fromUid': req.toUid},
+      );
+    }
   }
 
   Future<void> declineRequest(String requestId) async {
@@ -207,9 +251,12 @@ class FriendRepository {
   Stream<List<FriendMessageModel>> getMessages(String chatId) {
     return _messagesRef
         .where('chatId', isEqualTo: chatId)
-        .orderBy('timestamp', descending: false)
         .snapshots()
-        .map((s) => s.docs.map((d) => FriendMessageModel.fromFirestore(d)).toList());
+        .map((s) {
+          final list = s.docs.map((d) => FriendMessageModel.fromFirestore(d)).toList();
+          list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+          return list;
+        });
   }
 
   Future<void> sendMessage(FriendMessageModel msg) async {

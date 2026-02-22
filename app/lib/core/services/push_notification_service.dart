@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -61,10 +63,26 @@ class PushNotificationService {
     // Get FCM Token and send to backend
     try {
       await _fcm.requestPermission();
-      final fcmToken = await _fcm.getToken();
+      String? fcmToken;
+      
+      if (kIsWeb) {
+        fcmToken = await _fcm.getToken();
+      } else if (Platform.isIOS) {
+        // Wait for APNS token to be available (will remain null on Simulators)
+        final apnsToken = await _fcm.getAPNSToken();
+        if (apnsToken != null) {
+          fcmToken = await _fcm.getToken();
+        } else {
+          print('APNS token is null. Running on simulator or APNS not configured.');
+        }
+      } else {
+        fcmToken = await _fcm.getToken();
+      }
+
       if (fcmToken != null) {
         await _apiService.registerFcmToken(uid, fcmToken);
       }
+      
       // Listen for token refreshes
       _fcm.onTokenRefresh.listen((newToken) {
          _apiService.registerFcmToken(uid, newToken);

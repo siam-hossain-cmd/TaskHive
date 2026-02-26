@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../domain/models/task_model.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/data/repositories/notification_repository.dart';
+import '../../../notifications/domain/models/notification_model.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
+import '../../../../core/services/api_service.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository();
@@ -66,14 +70,38 @@ final overdueTasksProvider = Provider<List<TaskModel>>((ref) {
 class TaskNotifier extends StateNotifier<AsyncValue<void>> {
   final TaskRepository _repository;
   final String? _userId;
+  final NotificationRepository _notifRepo;
+  final ApiService _apiService;
 
-  TaskNotifier(this._repository, this._userId)
+  TaskNotifier(this._repository, this._userId, this._notifRepo, this._apiService)
       : super(const AsyncValue.data(null));
 
   Future<TaskModel?> createTask(TaskModel task) async {
     state = const AsyncValue.loading();
     try {
       final created = await _repository.createTask(task);
+      
+      // Notification Logic
+      if (_userId != null) {
+        final notif = NotificationModel(
+          id: '',
+          title: 'Task Created',
+          body: 'You created a new task: "${task.title}"',
+          type: 'task_created',
+          createdAt: DateTime.now(),
+          relatedId: created.id,
+        );
+        await _notifRepo.createNotification(_userId, notif);
+        
+        // Also send push
+        await _apiService.sendUserNotification(
+          targetUid: _userId,
+          title: notif.title,
+          body: notif.body,
+          payload: {'type': 'task_created', 'taskId': created.id},
+        );
+      }
+
       state = const AsyncValue.data(null);
       return created;
     } catch (e, st) {
@@ -86,6 +114,20 @@ class TaskNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _repository.updateTask(task);
+      
+      // Basic assignment / update notification 
+      if (_userId != null) {
+        final notif = NotificationModel(
+          id: '',
+          title: 'Task Updated',
+          body: 'Task "${task.title}" was updated.',
+          type: 'task_assigned', // or 'general'
+          createdAt: DateTime.now(),
+          relatedId: task.id,
+        );
+        await _notifRepo.createNotification(_userId, notif);
+      }
+
       state = const AsyncValue.data(null);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -124,5 +166,7 @@ final taskNotifierProvider =
     StateNotifierProvider<TaskNotifier, AsyncValue<void>>((ref) {
   final repo = ref.read(taskRepositoryProvider);
   final user = ref.watch(authStateProvider).valueOrNull;
-  return TaskNotifier(repo, user?.uid);
+  final notifRepo = ref.watch(notificationRepositoryProvider);
+  final apiService = ref.watch(apiServiceProvider);
+  return TaskNotifier(repo, user?.uid, notifRepo, apiService);
 });

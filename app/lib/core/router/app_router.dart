@@ -22,6 +22,7 @@ import '../../features/friends/presentation/providers/friend_providers.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/notifications/presentation/screens/notification_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
@@ -51,6 +52,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/settings',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: false, child: SettingsScreen()),
+      ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: false, child: NotificationScreen()),
       ),
       GoRoute(
         path: '/calendar',

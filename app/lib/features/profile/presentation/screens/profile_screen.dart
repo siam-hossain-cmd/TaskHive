@@ -41,19 +41,22 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(children: [
                     // Avatar
                     Container(
-                      width: 86, height: 86,
+                      width: 96, height: 96,
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 5))],
+                        boxShadow: [
+                          BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8)),
+                          const BoxShadow(color: Colors.white, blurRadius: 0, spreadRadius: 4),
+                        ],
                       ),
                       child: Center(child: Text(
                         user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.white),
                       )),
                     ),
                     const SizedBox(height: 14),
-                    Text(user.displayName, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900)),
+                    Text(user.displayName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
                     const SizedBox(height: 4),
                     Text(user.email, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 12),
@@ -147,7 +150,7 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(AppSizes.xl),
                   child: Center(child: Text(
                     'Member since ${AppHelpers.formatDate(user.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                   )),
                 ),
               ),
@@ -208,12 +211,12 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12, top: 8, left: 4),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(text.toUpperCase(), style: const TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w800,
-          color: AppColors.textSecondary, letterSpacing: 1.2)),
+          fontSize: 12, fontWeight: FontWeight.w800,
+          color: AppColors.textSecondary, letterSpacing: 1.5)),
       ),
     );
   }
@@ -229,22 +232,33 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceColor,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
-          ),
-          child: Icon(icon, size: 22, color: AppColors.textPrimary),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.05)),
         ),
-        title: Text(label, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-        trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 46, height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 24, color: AppColors.primary),
+          ),
+          title: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          trailing: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(color: AppColors.bgColor, shape: BoxShape.circle),
+            child: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textSecondary),
+          ),
+        ),
       ),
     );
   }
@@ -261,17 +275,22 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
+          color: AppColors.surfaceColor,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4))],
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color)),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 10),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
         ]),
       ),
     );

@@ -9,6 +9,7 @@ import '../providers/task_providers.dart';
 import '../widgets/task_card.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../auth/domain/models/user_model.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -96,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       padding: const EdgeInsets.only(bottom: 120),
       children: [
         // ── Header ─────────────────────────────────────────────────────────
-        _buildHeader(context, user, firstName, todayStr),
+        _buildHeader(context, ref, user, firstName, todayStr),
 
         // ── Progress + Stats ────────────────────────────────────────────────
         Padding(
@@ -142,8 +143,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildHeader(BuildContext context, UserModel? user, String firstName, String todayStr) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, UserModel? user, String firstName, String todayStr) {
     final initial = user?.displayName.isNotEmpty == true ? user!.displayName[0].toUpperCase() : '?';
+    final unreadCount = ref.watch(unreadNotificationCountProvider).value ?? 0;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
       decoration: BoxDecoration(
@@ -180,16 +182,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
                 ]),
               ),
-              // Settings quick-access bell
+              // Notifications quick-access bell
               GestureDetector(
-                onTap: () => context.push('/settings'),
+                onTap: () => context.push('/notifications'),
                 child: Container(
                   width: 42, height: 42,
                   decoration: BoxDecoration(
                     color: AppColors.bgColor, borderRadius: BorderRadius.circular(14),
                     boxShadow: AppTheme.softShadows,
                   ),
-                  child: const Icon(Icons.settings_outlined, color: AppColors.textPrimary, size: 22),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 8, top: 8,
+                          child: Container(
+                            width: 10, height: 10,
+                            decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],

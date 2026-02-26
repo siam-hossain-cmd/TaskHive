@@ -16,6 +16,10 @@ import '../../../groups/domain/models/group_model.dart';
 import '../../../groups/presentation/providers/group_providers.dart';
 import '../../../friends/presentation/providers/friend_providers.dart';
 import '../../../friends/domain/models/friend_model.dart';
+import '../../../notifications/data/repositories/notification_repository.dart';
+import '../../../notifications/domain/models/notification_model.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
+import '../../../../core/services/api_service.dart';
 
 part 'create_task_steps.dart';
 part 'create_task_team_steps.dart';
@@ -255,6 +259,27 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
           createdAt: DateTime.now(),
         );
         await repo.createGroupTask(groupTask);
+
+        // Notify Assignee if not self
+        if (assignedTo != user.uid) {
+          final notifRepo = ref.read(notificationRepositoryProvider);
+          final apiService = ref.read(apiServiceProvider);
+          final notif = NotificationModel(
+            id: '',
+            title: 'New Task Assigned',
+            body: '${user.displayName} assigned you to: "${groupTask.title}"',
+            type: 'task_assigned',
+            createdAt: DateTime.now(),
+            relatedId: groupId,
+          );
+          await notifRepo.createNotification(assignedTo, notif);
+          await apiService.sendUserNotification(
+            targetUid: assignedTo,
+            title: notif.title,
+            body: notif.body,
+            payload: {'type': 'task_assigned', 'groupId': groupId},
+          );
+        }
       }
 
       if (mounted) context.pop();

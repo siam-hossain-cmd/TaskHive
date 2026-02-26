@@ -91,6 +91,18 @@ class PushNotificationService {
       print('Failed to register FCM token: $e');
     }
 
+    // Handle foreground FCM messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        _showNotification(
+          id: message.messageId.hashCode,
+          title: message.notification!.title ?? 'New Notification',
+          body: message.notification!.body ?? '',
+          payload: message.data['type']?.toString() ?? 'general',
+        );
+      }
+    });
+
     // Listen for new incoming requests
     _incomingRequestsSub = _firestore
         .collection('friend_requests')

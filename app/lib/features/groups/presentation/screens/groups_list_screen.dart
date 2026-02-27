@@ -51,7 +51,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
             opacity: _fadeAnim,
             child: groupsAsync.when(
               data: (groups) => _buildContent(context, groups),
-              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
+              loading: () => Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
               error: (e, _) => Center(child: Text('Error: $e')),
             ),
           ),
@@ -69,7 +69,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Team Space', style: TextStyle(
@@ -88,7 +88,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
             Row(
               children: [
                 _iconBtn(Icons.search_rounded),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => context.push('/create-group'),
                   child: Container(
@@ -117,8 +117,8 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
 
         // Demo member assignments section
         if (groups.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          const Text('Top Contributors', style: TextStyle(
+          SizedBox(height: 24),
+          Text('Top Contributors', style: TextStyle(
             fontSize: 20, fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
             letterSpacing: -0.5,
@@ -127,7 +127,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
           ..._buildMemberRows(),
         ],
 
-        const SizedBox(height: 100),
+        SizedBox(height: 100),
       ],
     );
   }
@@ -173,12 +173,12 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(group.name, style: const TextStyle(
+                        Text(group.name, style: TextStyle(
                           fontSize: 24, fontWeight: FontWeight.w900,
                           color: AppColors.textPrimary,
                           letterSpacing: -0.5,
                         )),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text('${group.memberIds.length} Members active',
                           style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w600,
@@ -213,7 +213,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               // Progress bar
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
@@ -224,7 +224,7 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
                   valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -270,21 +270,21 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
             ),
             child: Center(child: Text(
               (m['name'] as String)[0],
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18,
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18,
                 color: AppColors.textPrimary),
             )),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(m['name'] as String, style: const TextStyle(
+                Text(m['name'] as String, style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 )),
-                const SizedBox(height: 2),
-                Text('${m['tasks']} tasks assigned', style: const TextStyle(
+                SizedBox(height: 2),
+                Text('${m['tasks']} tasks assigned', style: TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
                 )),
               ],
@@ -322,18 +322,18 @@ class _GroupsListScreenState extends ConsumerState<GroupsListScreen>
               shape: BoxShape.circle,
               boxShadow: AppTheme.softShadows,
             ),
-            child: const Icon(Icons.groups_outlined, size: 40, color: AppColors.textSecondary),
+            child: Icon(Icons.groups_outlined, size: 40, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 24),
-          const Text('No teams yet', style: TextStyle(
+          SizedBox(height: 24),
+          Text('No teams yet', style: TextStyle(
             fontSize: 20, fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
           )),
-          const SizedBox(height: 8),
-          const Text('Create a space to collaborate.', style: TextStyle(
+          SizedBox(height: 8),
+          Text('Create a space to collaborate.', style: TextStyle(
             fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
           )),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           GestureDetector(
             onTap: () => context.push('/create-group'),
             child: Container(

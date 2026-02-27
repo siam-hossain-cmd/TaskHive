@@ -56,7 +56,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             opacity: _fadeAnim,
             child: tasksAsync.when(
               data: (tasks) => _buildContent(context, tasks),
-              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
+              loading: () => Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
               error: (e, _) => Center(child: Text('Error: $e')),
             ),
           ),
@@ -76,7 +76,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Insights', style: TextStyle(
+            Text('Insights', style: TextStyle(
               fontSize: 36, fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
               letterSpacing: -1.0,
@@ -92,7 +92,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: AppTheme.softShadows,
                     ),
-                    child: const Icon(Icons.settings_outlined, size: 24,
+                    child: Icon(Icons.settings_outlined, size: 24,
                       color: AppColors.textPrimary),
                   ),
                 ),
@@ -100,7 +100,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ),
           ],
         ),
-        const SizedBox(height: 36),
+        SizedBox(height: 36),
 
         // Circular Progress Ring Card
         Container(
@@ -126,15 +126,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('${(progress * _progressAnim.value).round()}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 48, fontWeight: FontWeight.w900,
                                 color: AppColors.textPrimary,
                                 letterSpacing: -2,
                                 height: 1.0,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            const Text('COMPLETE', style: TextStyle(
+                            SizedBox(height: 4),
+                            Text('COMPLETE', style: TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w800,
                               color: AppColors.textSecondary,
                               letterSpacing: 2,
@@ -146,7 +146,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
                   );
                 },
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               // Stats Row
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -161,10 +161,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
             ],
           ),
         ),
-        const SizedBox(height: 36),
+        SizedBox(height: 36),
 
         // Mastery Levels
-        const Text('MASTERY LEVELS', style: TextStyle(
+        Text('MASTERY LEVELS', style: TextStyle(
           fontSize: 13, fontWeight: FontWeight.w800,
           color: AppColors.textSecondary,
           letterSpacing: 2,
@@ -190,8 +190,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
           color: valueColor,
           letterSpacing: -1.0,
         )),
-        const SizedBox(height: 2),
-        Text(label, style: const TextStyle(
+        SizedBox(height: 2),
+        Text(label, style: TextStyle(
           fontSize: 11, fontWeight: FontWeight.w800,
           color: AppColors.textSecondary,
           letterSpacing: 1.5,
@@ -213,17 +213,17 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(subject, style: const TextStyle(
+              Text(subject, style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               )),
-              Text('$value%', style: const TextStyle(
+              Text('$value%', style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w900,
                 color: AppColors.textSecondary,
               )),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: AnimatedBuilder(

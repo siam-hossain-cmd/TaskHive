@@ -67,7 +67,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Friends', style: TextStyle(
@@ -122,8 +122,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen>
           ),
           indicatorSize: TabBarIndicatorSize.tab,
           indicatorPadding: const EdgeInsets.all(4),
-          labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+          labelStyle: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
           labelColor: Colors.white,
           unselectedLabelColor: AppColors.textSecondary,
           dividerColor: Colors.transparent,
@@ -200,19 +200,19 @@ class _FriendTile extends StatelessWidget {
         child: Row(
           children: [
             _Avatar(name: friend.friendName, photoUrl: friend.friendPhotoUrl, size: 52),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(friend.friendName, style: const TextStyle(
+                  Text(friend.friendName, style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                   )),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(
                     friend.lastMessage ?? 'Tap to chat',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -221,20 +221,20 @@ class _FriendTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (friend.lastMessageAt != null)
-                  Text(_timeLabel(friend.lastMessageAt!), style: const TextStyle(
+                  Text(_timeLabel(friend.lastMessageAt!), style: TextStyle(
                     fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
                   )),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 if (friend.unreadCount > 0)
                   Container(
                     width: 22, height: 22,
-                    decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                    child: Center(child: Text('${friend.unreadCount}', style: const TextStyle(
+                    decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                    child: Center(child: Text('${friend.unreadCount}', style: TextStyle(
                       fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white,
                     ))),
                   )
                 else
-                  const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
+                  Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20),
               ],
             ),
           ],
@@ -269,7 +269,7 @@ class _RequestsTab extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Incoming Requests', style: TextStyle(
+                Text('Incoming Requests', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
                 )),
                 const SizedBox(height: 12),
@@ -278,8 +278,8 @@ class _RequestsTab extends ConsumerWidget {
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-          error: (e, _) => const SizedBox(),
+          loading: () => Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          error: (e, _) => SizedBox(),
         ),
         outgoingAsync.when(
           data: (reqs) {
@@ -287,7 +287,7 @@ class _RequestsTab extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sent Requests', style: TextStyle(
+                Text('Sent Requests', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
                 )),
                 const SizedBox(height: 12),
@@ -323,15 +323,15 @@ class _IncomingRequestTile extends ConsumerWidget {
       child: Row(
         children: [
           _Avatar(name: req.fromName, photoUrl: req.fromPhotoUrl, size: 48),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(req.fromName, style: const TextStyle(
+                Text(req.fromName, style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                 )),
-                Text(req.fromEmail, style: const TextStyle(
+                Text(req.fromEmail, style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
                 )),
               ],
@@ -345,7 +345,7 @@ class _IncomingRequestTile extends ConsumerWidget {
                 bg: AppColors.priorityLowBg,
                 onTap: () => ref.read(friendRequestNotifierProvider.notifier).accept(req),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               _ActionBtn(
                 icon: Icons.close_rounded,
                 color: AppColors.priorityHighText,
@@ -377,15 +377,15 @@ class _SentRequestTile extends StatelessWidget {
       child: Row(
         children: [
           _Avatar(name: req.toUid, photoUrl: null, size: 48),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${req.toUid.substring(0, 8)}...', style: const TextStyle(
+                Text('${req.toUid.substring(0, 8)}...', style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                 )),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -552,15 +552,15 @@ class _SearchResultTile extends StatelessWidget {
       child: Row(
         children: [
           _Avatar(name: profile.displayName, photoUrl: profile.photoUrl, size: 48),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(profile.displayName, style: const TextStyle(
+                Text(profile.displayName, style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.textPrimary,
                 )),
-                Text(profile.email, style: const TextStyle(
+                Text(profile.email, style: TextStyle(
                   fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
                 )),
               ],
@@ -663,12 +663,12 @@ Widget _emptyState(String title, String sub, IconData icon) {
             ),
             child: Icon(icon, size: 40, color: AppColors.primary),
           ),
-          const SizedBox(height: 20),
-          Text(title, style: const TextStyle(
+          SizedBox(height: 20),
+          Text(title, style: TextStyle(
             fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
           )),
-          const SizedBox(height: 8),
-          Text(sub, textAlign: TextAlign.center, style: const TextStyle(
+          SizedBox(height: 8),
+          Text(sub, textAlign: TextAlign.center, style: TextStyle(
             fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
           )),
         ],

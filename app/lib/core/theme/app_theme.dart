@@ -5,45 +5,44 @@ import '../constants/app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // ──────────────── LIGHT THEME (CONCEPT 1) ────────────────
+  // ──────────────── LIGHT THEME ────────────────
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.bgColor,
+      scaffoldBackgroundColor: AppColors.lightBg,
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
-        surface: AppColors.surfaceColor,
+        surface: AppColors.lightSurface,
         error: AppColors.error,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: AppColors.textPrimary,
+        onSurface: AppColors.lightTextPrimary,
         onError: Colors.white,
       ),
       textTheme: _buildTextTheme(Brightness.light),
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.bgColor,
+        backgroundColor: AppColors.lightBg,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surfaceColor,
+        color: AppColors.lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24), // Larger radius
-          // NO BORDERS in Concept 1
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceColor,
+        fillColor: AppColors.lightSurface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none, // No borders
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
@@ -58,11 +57,11 @@ class AppTheme {
           borderSide: const BorderSide(color: AppColors.error),
         ),
         hintStyle: const TextStyle(color: AppColors.lightTextTertiary, fontSize: 15),
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+        labelStyle: const TextStyle(color: AppColors.lightTextSecondary, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.0),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.textPrimary, // Black buttons look very premium on light UI
+          backgroundColor: AppColors.lightTextPrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size(double.infinity, 60),
@@ -71,34 +70,33 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.lightTextPrimary,
         foregroundColor: Colors.white,
-        elevation: 12, // Stronger shadow for floating actions
+        elevation: 12,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        selectedItemColor: AppColors.textPrimary,
+        selectedItemColor: AppColors.lightTextPrimary,
         unselectedItemColor: AppColors.lightTextTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
         selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0),
         unselectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0),
       ),
-      dividerTheme: const DividerThemeData(color: AppColors.bgColor, thickness: 1, space: 0),
+      dividerTheme: const DividerThemeData(color: AppColors.lightBg, thickness: 1, space: 0),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.surfaceColor,
+        backgroundColor: AppColors.lightSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceColor,
+        backgroundColor: AppColors.lightSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       ),
     );
   }
 
-  // ──────────────── DARK THEME (FALLBACK) ────────────────
-  // For Concept 1, the focus is Light mode. Dark mode will just be an inverted clean version.
+  // ──────────────── DARK THEME ────────────────
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
@@ -150,6 +148,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: AppColors.error),
         ),
+        hintStyle: const TextStyle(color: AppColors.darkTextTertiary, fontSize: 15),
+        labelStyle: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.0),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -161,6 +161,30 @@ class AppTheme {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(20))),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.transparent,
+        selectedItemColor: AppColors.darkTextPrimary,
+        unselectedItemColor: AppColors.darkTextTertiary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+        unselectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+      ),
+      dividerTheme: const DividerThemeData(color: AppColors.darkBorder, thickness: 1, space: 0),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.darkSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(40))),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.darkSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      ),
     );
   }
 
@@ -168,10 +192,10 @@ class AppTheme {
   static TextTheme _buildTextTheme(Brightness brightness) {
     final color = brightness == Brightness.dark
         ? AppColors.darkTextPrimary
-        : AppColors.textPrimary;
+        : AppColors.lightTextPrimary;
     final secondaryColor = brightness == Brightness.dark
         ? AppColors.darkTextSecondary
-        : AppColors.textSecondary;
+        : AppColors.lightTextSecondary;
 
     return GoogleFonts.interTextTheme(
       TextTheme(
@@ -192,17 +216,25 @@ class AppTheme {
     );
   }
 
-  // Helper for soft shadows (Concept 1 style)
-  static List<BoxShadow> get softShadows => [
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.04),
-      blurRadius: 24,
-      offset: const Offset(0, 8),
-    ),
-    BoxShadow(
-      color: Colors.black.withValues(alpha: 0.02),
-      blurRadius: 8,
-      offset: const Offset(0, 4),
-    ),
-  ];
+  // ── Shadows (suppress in dark mode) ──
+  static List<BoxShadow> get softShadows => AppColors.isDark
+      ? [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ]
+      : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ];
 }

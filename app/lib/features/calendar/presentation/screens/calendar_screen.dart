@@ -67,7 +67,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             opacity: _fadeAnim,
             child: tasksAsync.when(
               data: (tasks) => _buildContent(context, tasks),
-              loading: () => const Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
+              loading: () => Center(child: CircularProgressIndicator(color: AppColors.textPrimary)),
               error: (e, _) => Center(child: Text('Error: $e')),
             ),
           ),
@@ -87,7 +87,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Calendar', style: TextStyle(
+            Text('Calendar', style: TextStyle(
               fontSize: 36, fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
               letterSpacing: -1.0,
@@ -109,7 +109,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
 
         // Calendar Card
         Container(
@@ -126,7 +126,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             calendarFormat: _isMonthView ? CalendarFormat.month : CalendarFormat.week,
             startingDayOfWeek: StartingDayOfWeek.sunday,
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
               titleTextStyle: TextStyle(
@@ -136,15 +136,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               leftChevronIcon: Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
               rightChevronIcon: Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
             ),
-            daysOfWeekStyle: const DaysOfWeekStyle(
+            daysOfWeekStyle: DaysOfWeekStyle(
               weekdayStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary),
               weekendStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary),
             ),
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
               cellMargin: const EdgeInsets.all(4),
-              defaultTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-              weekendTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              defaultTextStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              weekendTextStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               todayTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.primary),
               selectedTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white),
               todayDecoration: BoxDecoration(
@@ -186,18 +186,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             onPageChanged: (focused) => _focusedDay = focused,
           ),
         ),
-        const SizedBox(height: 36),
+        SizedBox(height: 36),
 
         // Agenda Section
-        const Text('Upcoming Schedule', style: TextStyle(
+        Text('Upcoming Schedule', style: TextStyle(
           fontSize: 20, fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
           letterSpacing: -0.5,
         )),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
 
         if (pendingTasks.isEmpty)
-          const Center(child: Padding(
+          Center(child: Padding(
             padding: EdgeInsets.all(32),
             child: Text('No upcoming events', style: TextStyle(
               fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
@@ -246,22 +246,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(timeStr, style: const TextStyle(
+                Text(timeStr, style: TextStyle(
                   fontSize: 14, fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                 )),
-                Text(dateStr, style: const TextStyle(
+                Text(dateStr, style: TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                 )),
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           // Timeline dot
           Column(
             children: [
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Container(
                 width: 12, height: 12,
                 decoration: BoxDecoration(
@@ -279,7 +279,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           // Content Card
           Expanded(
             child: Container(
@@ -292,13 +292,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(task.title, style: const TextStyle(
+                  Text(task.title, style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   )),
                   if (task.subject.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(task.subject, style: const TextStyle(
+                    SizedBox(height: 4),
+                    Text(task.subject, style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
                     )),

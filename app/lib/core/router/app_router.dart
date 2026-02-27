@@ -23,6 +23,8 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/notifications/presentation/screens/notification_screen.dart';
+import '../../features/tasks/presentation/screens/assignment_detail_screen.dart';
+import '../../features/tasks/presentation/screens/submission_detail_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
@@ -33,7 +35,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     routes: [
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
-      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, __) => const OnboardingScreen(),
+      ),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
 
@@ -41,22 +46,34 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/create-task',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: true, child: CreateTaskScreen()),
+        pageBuilder: (_, __) => const MaterialPage(
+          fullscreenDialog: true,
+          child: CreateTaskScreen(),
+        ),
       ),
       GoRoute(
         path: '/create-group',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: true, child: CreateGroupScreen()),
+        pageBuilder: (_, __) => const MaterialPage(
+          fullscreenDialog: true,
+          child: CreateGroupScreen(),
+        ),
       ),
       GoRoute(
         path: '/settings',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: false, child: SettingsScreen()),
+        pageBuilder: (_, __) => const MaterialPage(
+          fullscreenDialog: false,
+          child: SettingsScreen(),
+        ),
       ),
       GoRoute(
         path: '/notifications',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (_, __) => const MaterialPage(fullscreenDialog: false, child: NotificationScreen()),
+        pageBuilder: (_, __) => const MaterialPage(
+          fullscreenDialog: false,
+          child: NotificationScreen(),
+        ),
       ),
       GoRoute(
         path: '/calendar',
@@ -86,7 +103,45 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) {
           final friendUid = state.pathParameters['friendUid'] ?? '';
           final friend = state.extra as FriendModel?;
-          return MaterialPage(child: FriendChatScreen(friendUid: friendUid, friend: friend));
+          return MaterialPage(
+            child: FriendChatScreen(friendUid: friendUid, friend: friend),
+          );
+        },
+      ),
+
+      // Assignment Detail
+      GoRoute(
+        path: '/assignment/:assignmentId',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final assignmentId = state.pathParameters['assignmentId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupId = extra['groupId'] as String? ?? '';
+          return MaterialPage(
+            child: AssignmentDetailScreen(
+              assignmentId: assignmentId,
+              groupId: groupId,
+            ),
+          );
+        },
+      ),
+
+      // Submission / Task Detail within Assignment
+      GoRoute(
+        path: '/assignment/:assignmentId/task/:taskId',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final assignmentId = state.pathParameters['assignmentId'] ?? '';
+          final taskId = state.pathParameters['taskId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupId = extra['groupId'] as String? ?? '';
+          return MaterialPage(
+            child: SubmissionDetailScreen(
+              assignmentId: assignmentId,
+              taskId: taskId,
+              groupId: groupId,
+            ),
+          );
         },
       ),
 
@@ -101,15 +156,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/tasks',
-            pageBuilder: (_, __) => const NoTransitionPage(child: TaskListScreen()),
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: TaskListScreen()),
           ),
           GoRoute(
             path: '/friends',
-            pageBuilder: (_, __) => const NoTransitionPage(child: FriendsScreen()),
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: FriendsScreen()),
           ),
           GoRoute(
             path: '/shell-settings',
-            pageBuilder: (_, __) => const NoTransitionPage(child: SettingsScreen()),
+            pageBuilder: (_, __) =>
+                const NoTransitionPage(child: SettingsScreen()),
           ),
         ],
       ),
@@ -138,10 +196,18 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
 
   void _go(int index) {
     switch (index) {
-      case 0: context.go('/home'); break;
-      case 1: context.go('/tasks'); break;
-      case 2: context.go('/friends'); break;
-      case 3: context.go('/shell-settings'); break;
+      case 0:
+        context.go('/home');
+        break;
+      case 1:
+        context.go('/tasks');
+        break;
+      case 2:
+        context.go('/friends');
+        break;
+      case 3:
+        context.go('/shell-settings');
+        break;
     }
   }
 
@@ -155,7 +221,7 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
         backgroundColor: AppColors.primary,
         elevation: 8,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        child: Icon(Icons.add_rounded, color: Colors.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: SafeArea(
@@ -215,11 +281,18 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  const _NavItem({required this.icon, required this.label, required this.isSelected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5);
+    final color = isSelected
+        ? AppColors.primary
+        : AppColors.textSecondary.withValues(alpha: 0.5);
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -241,11 +314,14 @@ class _NavItem extends StatelessWidget {
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 3),
-            Text(label, style: TextStyle(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-              color: color,
-            )),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -263,46 +339,71 @@ class _FriendNavItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final friends = ref.watch(friendsProvider).asData?.value ?? [];
     final totalUnread = friends.fold<int>(0, (s, f) => s + f.unreadCount);
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5);
+    final color = isSelected
+        ? AppColors.primary
+        : AppColors.textSecondary.withValues(alpha: 0.5);
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Stack(clipBehavior: Clip.none, children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(Icons.people_rounded, color: color, size: 24),
-            ),
-            if (totalUnread > 0)
-              Positioned(
-                right: 0, top: 0,
-                child: Container(
-                  width: 14, height: 14,
-                  decoration: const BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
-                  child: Center(child: Text(
-                    totalUnread > 9 ? '9+' : '$totalUnread',
-                    style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: Colors.white),
-                  )),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(Icons.people_rounded, color: color, size: 24),
                 ),
+                if (totalUnread > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: AppColors.error,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          totalUnread > 9 ? '9+' : '$totalUnread',
+                          style: const TextStyle(
+                            fontSize: 7,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Friends',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                color: color,
               ),
-          ]),
-          const SizedBox(height: 3),
-          Text('Friends', style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-            color: color,
-          )),
-        ]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,31 +417,39 @@ class _SettingsNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.5);
+    final color = isSelected
+        ? AppColors.primary
+        : AppColors.textSecondary.withValues(alpha: 0.5);
     return Expanded(
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(Icons.settings_rounded, color: color, size: 24),
             ),
-            child: Icon(Icons.settings_rounded, color: color, size: 24),
-          ),
-          const SizedBox(height: 3),
-          Text('Settings', style: TextStyle(
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-            color: color,
-          )),
-        ]),
+            const SizedBox(height: 3),
+            Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

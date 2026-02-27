@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/constants/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/router/app_router.dart';
@@ -17,6 +18,9 @@ class TaskHiveApp extends ConsumerWidget {
         (themeMode == ThemeMode.system &&
             WidgetsBinding.instance.platformDispatcher.platformBrightness ==
                 Brightness.dark);
+
+    // Sync AppColors brightness BEFORE widget tree is built
+    AppColors.updateBrightness(isDark ? Brightness.dark : Brightness.light);
 
     // Dynamically update status bar icons to match active theme
     final overlayStyle = isDark

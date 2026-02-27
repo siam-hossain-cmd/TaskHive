@@ -22,7 +22,7 @@ class ProfileScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (user) {
-          if (user == null) return const Center(child: Text('Not logged in'));
+          if (user == null) return Center(child: Text('Not logged in'));
 
           return CustomScrollView(
             slivers: [
@@ -52,13 +52,13 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                       child: Center(child: Text(
                         user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.white),
+                        style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: Colors.white),
                       )),
                     ),
-                    const SizedBox(height: 14),
-                    Text(user.displayName, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    Text(user.email, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                    SizedBox(height: 14),
+                    Text(user.displayName, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+                    SizedBox(height: 4),
+                    Text(user.email, style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 12),
 
                     // Unique ID badge
@@ -150,7 +150,7 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(AppSizes.xl),
                   child: Center(child: Text(
                     'Member since ${AppHelpers.formatDate(user.createdAt)}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                   )),
                 ),
               ),
@@ -188,10 +188,10 @@ class _SettingsCTA extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 3))],
             ),
-            child: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
+            child: Icon(Icons.settings_rounded, color: Colors.white, size: 24),
           ),
-          const SizedBox(width: 14),
-          const Expanded(
+          SizedBox(width: 14),
+          Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
               Text('Theme, notifications, account', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
@@ -214,7 +214,7 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, top: 8, left: 4),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(text.toUpperCase(), style: const TextStyle(
+        child: Text(text.toUpperCase(), style: TextStyle(
           fontSize: 12, fontWeight: FontWeight.w800,
           color: AppColors.textSecondary, letterSpacing: 1.5)),
       ),
@@ -252,11 +252,11 @@ class _MenuTile extends StatelessWidget {
             ),
             child: Icon(icon, size: 24, color: AppColors.primary),
           ),
-          title: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          title: Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
           trailing: Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: AppColors.bgColor, shape: BoxShape.circle),
-            child: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textSecondary),
+            decoration: BoxDecoration(color: AppColors.bgColor, shape: BoxShape.circle),
+            child: Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textSecondary),
           ),
         ),
       ),
@@ -288,9 +288,9 @@ class _StatCard extends StatelessWidget {
             decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
             child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
         ]),
       ),
     );

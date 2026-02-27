@@ -7,6 +7,7 @@ enum GroupTaskStatus {
   inProgress,
   submitted,
   pendingApproval,
+  changesRequested,
   approved,
   rejected,
 }
@@ -75,6 +76,7 @@ class GroupModel {
 class GroupTaskModel {
   final String id;
   final String groupId;
+  final String? assignmentId;
   final String assignedTo;
   final String assignedBy;
   final String title;
@@ -82,6 +84,10 @@ class GroupTaskModel {
   final GroupTaskStatus status;
   final String? rejectionFeedback;
   final List<String> attachments;
+  final String? submissionUrl;
+  final String? submissionFileName;
+  final DateTime? submittedAt;
+  final DateTime? approvedAt;
   final DateTime dueDate;
   final String priority;
   final DateTime createdAt;
@@ -89,6 +95,7 @@ class GroupTaskModel {
   GroupTaskModel({
     required this.id,
     required this.groupId,
+    this.assignmentId,
     required this.assignedTo,
     required this.assignedBy,
     required this.title,
@@ -96,6 +103,10 @@ class GroupTaskModel {
     this.status = GroupTaskStatus.pending,
     this.rejectionFeedback,
     this.attachments = const [],
+    this.submissionUrl,
+    this.submissionFileName,
+    this.submittedAt,
+    this.approvedAt,
     required this.dueDate,
     this.priority = 'medium',
     required this.createdAt,
@@ -109,6 +120,7 @@ class GroupTaskModel {
     return GroupTaskModel(
       id: doc.id,
       groupId: data['groupId'] ?? '',
+      assignmentId: data['assignmentId'],
       assignedTo: data['assignedTo'] ?? '',
       assignedBy: data['assignedBy'] ?? '',
       title: data['title'] ?? '',
@@ -119,6 +131,18 @@ class GroupTaskModel {
       ),
       rejectionFeedback: data['rejectionFeedback'],
       attachments: List<String>.from(data['attachments'] ?? []),
+      submissionUrl: data['submissionUrl'],
+      submissionFileName: data['submissionFileName'],
+      submittedAt: data['submittedAt'] != null
+          ? (data['submittedAt'] is Timestamp
+                ? (data['submittedAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['submittedAt'].toString()))
+          : null,
+      approvedAt: data['approvedAt'] != null
+          ? (data['approvedAt'] is Timestamp
+                ? (data['approvedAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['approvedAt'].toString()))
+          : null,
       dueDate: (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       priority: data['priority'] ?? 'medium',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -128,6 +152,7 @@ class GroupTaskModel {
   Map<String, dynamic> toFirestore() {
     return {
       'groupId': groupId,
+      'assignmentId': assignmentId,
       'assignedTo': assignedTo,
       'assignedBy': assignedBy,
       'title': title,
@@ -135,6 +160,12 @@ class GroupTaskModel {
       'status': status.name,
       'rejectionFeedback': rejectionFeedback,
       'attachments': attachments,
+      'submissionUrl': submissionUrl,
+      'submissionFileName': submissionFileName,
+      'submittedAt': submittedAt != null
+          ? Timestamp.fromDate(submittedAt!)
+          : null,
+      'approvedAt': approvedAt != null ? Timestamp.fromDate(approvedAt!) : null,
       'dueDate': Timestamp.fromDate(dueDate),
       'priority': priority,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -144,6 +175,7 @@ class GroupTaskModel {
   GroupTaskModel copyWith({
     String? id,
     String? groupId,
+    String? assignmentId,
     String? assignedTo,
     String? assignedBy,
     String? title,
@@ -151,6 +183,10 @@ class GroupTaskModel {
     GroupTaskStatus? status,
     String? rejectionFeedback,
     List<String>? attachments,
+    String? submissionUrl,
+    String? submissionFileName,
+    DateTime? submittedAt,
+    DateTime? approvedAt,
     DateTime? dueDate,
     String? priority,
     DateTime? createdAt,
@@ -158,6 +194,7 @@ class GroupTaskModel {
     return GroupTaskModel(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      assignmentId: assignmentId ?? this.assignmentId,
       assignedTo: assignedTo ?? this.assignedTo,
       assignedBy: assignedBy ?? this.assignedBy,
       title: title ?? this.title,
@@ -165,6 +202,10 @@ class GroupTaskModel {
       status: status ?? this.status,
       rejectionFeedback: rejectionFeedback ?? this.rejectionFeedback,
       attachments: attachments ?? this.attachments,
+      submissionUrl: submissionUrl ?? this.submissionUrl,
+      submissionFileName: submissionFileName ?? this.submissionFileName,
+      submittedAt: submittedAt ?? this.submittedAt,
+      approvedAt: approvedAt ?? this.approvedAt,
       dueDate: dueDate ?? this.dueDate,
       priority: priority ?? this.priority,
       createdAt: createdAt ?? this.createdAt,

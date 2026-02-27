@@ -137,7 +137,7 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       // Priority Pill
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -156,7 +156,7 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
 
                   // Subtitle / Subject
                   if (widget.task.subject.isNotEmpty)

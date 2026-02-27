@@ -119,7 +119,7 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              const Text('Send Attachment', style: TextStyle(
+              Text('Send Attachment', style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
               )),
               const SizedBox(height: 8),
@@ -359,7 +359,7 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
               width: 40, height: 40,
               decoration: BoxDecoration(
                 color: AppColors.bgColor, borderRadius: BorderRadius.circular(14)),
-              child: const Icon(Icons.arrow_back_ios_new_rounded,
+              child: Icon(Icons.arrow_back_ios_new_rounded,
                   size: 18, color: AppColors.textPrimary),
             ),
           ),
@@ -371,24 +371,24 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
               width: 42, height: 42,
               decoration: const BoxDecoration(
                   gradient: AppColors.gradientPurpleBlue, shape: BoxShape.circle),
-              child: const Icon(Icons.person, color: AppColors.primary, size: 22),
+              child: Icon(Icons.person, color: AppColors.primary, size: 22),
             ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(friend?.friendName ?? widget.friendUid.substring(0, 8),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 17, fontWeight: FontWeight.w900,
                         color: AppColors.textPrimary)),
                 Row(children: [
                   Container(
                     width: 8, height: 8,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                         color: AppColors.priorityLowText, shape: BoxShape.circle)),
-                  const SizedBox(width: 5),
-                  const Text('Active now', style: TextStyle(
+                  SizedBox(width: 5),
+                  Text('Active now', style: TextStyle(
                       fontSize: 12, color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600)),
                 ]),
@@ -454,7 +454,7 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
               onSubmitted: (_) => _sendMessage(),
               textInputAction: TextInputAction.send,
               cursorColor: AppColors.primary,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
                 fontSize: 15,
@@ -517,16 +517,16 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
         children: [
           Container(
             width: 80, height: 80,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
                 gradient: AppColors.gradientPurpleBlue, shape: BoxShape.circle),
-            child: const Icon(Icons.chat_bubble_outline_rounded,
+            child: Icon(Icons.chat_bubble_outline_rounded,
                 size: 38, color: AppColors.primary),
           ),
-          const SizedBox(height: 20),
-          const Text('Start a conversation!', style: TextStyle(
+          SizedBox(height: 20),
+          Text('Start a conversation!', style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
-          const Text('Say hello to your friend 👋', style: TextStyle(
+          SizedBox(height: 8),
+          Text('Say hello to your friend 👋', style: TextStyle(
               fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
         ],
       ),
@@ -597,13 +597,13 @@ class _MessageBubble extends StatelessWidget {
                     height: 1.4,
                   )),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       DateFormat('hh:mm a').format(msg.timestamp),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -691,7 +691,7 @@ class _ImageBubble extends StatelessWidget {
           errorBuilder: (_, __, ___) => Container(
             width: 220, height: 100,
             color: AppColors.bgColor,
-            child: const Center(
+            child: Center(
               child: Icon(Icons.broken_image_rounded, color: AppColors.textSecondary, size: 36),
             ),
           ),
@@ -800,7 +800,7 @@ class _FileBubble extends StatelessWidget {
                       color: isMe ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  SizedBox(height: 3),
                   Text(
                     _sizeLabel,
                     style: TextStyle(
@@ -844,7 +844,7 @@ class _DateDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         children: [
-          const Expanded(child: Divider(color: AppColors.bgColor, thickness: 1.5)),
+          Expanded(child: Divider(color: AppColors.bgColor, thickness: 1.5)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Container(
@@ -854,12 +854,12 @@ class _DateDivider extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: AppTheme.softShadows,
               ),
-              child: Text(_label, style: const TextStyle(
+              child: Text(_label, style: TextStyle(
                 fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textSecondary,
               )),
             ),
           ),
-          const Expanded(child: Divider(color: AppColors.bgColor, thickness: 1.5)),
+          Expanded(child: Divider(color: AppColors.bgColor, thickness: 1.5)),
         ],
       ),
     );
@@ -896,9 +896,9 @@ class _SharedTasksPanel extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.task_alt_rounded, size: 18, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    const Text('Undone Tasks', style: TextStyle(
+                    Icon(Icons.task_alt_rounded, size: 18, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Text('Undone Tasks', style: TextStyle(
                       fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
                     )),
                     const Spacer(),
@@ -915,7 +915,7 @@ class _SharedTasksPanel extends ConsumerWidget {
                 ),
               ),
               if (undone.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
                   child: Text('All caught up! 🎉', style: TextStyle(
                     fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500,

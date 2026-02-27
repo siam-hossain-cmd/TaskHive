@@ -12,8 +12,9 @@ class GroupRepository {
         .where('memberIds', arrayContains: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => GroupModel.fromFirestore(d)).toList());
+        .map(
+          (snap) => snap.docs.map((d) => GroupModel.fromFirestore(d)).toList(),
+        );
   }
 
   // Create group
@@ -55,7 +56,9 @@ class GroupRepository {
   // ── Group Tasks ──
 
   Future<GroupTaskModel> createGroupTask(GroupTaskModel task) async {
-    final docRef = await _firestore.collection('group_tasks').add(task.toFirestore());
+    final docRef = await _firestore
+        .collection('group_tasks')
+        .add(task.toFirestore());
     return task.copyWith(id: docRef.id);
   }
 
@@ -65,12 +68,17 @@ class GroupRepository {
         .where('groupId', isEqualTo: groupId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => GroupTaskModel.fromFirestore(d)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => GroupTaskModel.fromFirestore(d)).toList(),
+        );
   }
 
   Future<void> updateGroupTask(GroupTaskModel task) async {
-    await _firestore.collection('group_tasks').doc(task.id).update(task.toFirestore());
+    await _firestore
+        .collection('group_tasks')
+        .doc(task.id)
+        .update(task.toFirestore());
   }
 
   Future<void> approveTask(String taskId) async {
@@ -92,6 +100,26 @@ class GroupRepository {
     });
   }
 
+  Future<void> submitTaskWork(
+    String taskId,
+    String submissionUrl,
+    String fileName,
+  ) async {
+    await _firestore.collection('group_tasks').doc(taskId).update({
+      'submissionUrl': submissionUrl,
+      'submissionFileName': fileName,
+      'submittedAt': FieldValue.serverTimestamp(),
+      'status': GroupTaskStatus.pendingApproval.name,
+    });
+  }
+
+  Future<void> requestChanges(String taskId, String feedback) async {
+    await _firestore.collection('group_tasks').doc(taskId).update({
+      'status': GroupTaskStatus.changesRequested.name,
+      'rejectionFeedback': feedback,
+    });
+  }
+
   // ── Activity Log ──
 
   Future<void> addActivityLog(ActivityLogModel log) async {
@@ -105,8 +133,10 @@ class GroupRepository {
         .orderBy('timestamp', descending: true)
         .limit(50)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => ActivityLogModel.fromFirestore(d)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => ActivityLogModel.fromFirestore(d)).toList(),
+        );
   }
 
   // ── Chat ──
@@ -122,7 +152,9 @@ class GroupRepository {
         .orderBy('timestamp', descending: true)
         .limit(100)
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => MessageModel.fromFirestore(d)).toList());
+        .map(
+          (snap) =>
+              snap.docs.map((d) => MessageModel.fromFirestore(d)).toList(),
+        );
   }
 }

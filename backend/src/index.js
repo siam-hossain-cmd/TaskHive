@@ -12,6 +12,8 @@ const notificationRoutes = require('./routes/notifications');
 const taskRoutes = require('./routes/tasks');
 const healthRoutes = require('./routes/health');
 const auditRoutes = require('./routes/audit');
+const aiRoutes = require('./routes/ai');
+const assignmentRoutes = require('./routes/assignments');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +48,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {

@@ -169,16 +169,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     shape: BoxShape.circle,
                     boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 3))],
                   ),
-                  child: Center(child: Text(initial, style: const TextStyle(
+                  child: Center(child: Text(initial, style: TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white))),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(todayStr, style: const TextStyle(
+                  Text(todayStr, style: TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
-                  Text('${_greeting()}, $firstName ${_greetingEmoji()}', style: const TextStyle(
+                  Text('${_greeting()}, $firstName ${_greetingEmoji()}', style: TextStyle(
                     fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
                 ]),
               ),
@@ -194,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      const Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24),
+                      Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24),
                       if (unreadCount > 0)
                         Positioned(
                           right: 8, top: 8,
@@ -289,7 +289,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick Access', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+        Text('Quick Access', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         Row(
           children: actions.map((a) {
@@ -325,7 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
       child: Row(children: [
-        Expanded(child: Text(title, style: const TextStyle(
+        Expanded(child: Text(title, style: TextStyle(
           fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary))),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -351,12 +351,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             shape: BoxShape.circle,
             boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 5))],
           ),
-          child: const Icon(Icons.check_circle_rounded, size: 44, color: Colors.white),
+          child: Icon(Icons.check_circle_rounded, size: 44, color: Colors.white),
         ),
-        const SizedBox(height: 24),
-        const Text('All clear! 🎉', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-        const SizedBox(height: 8),
-        const Text('You have no tasks yet.\nTap + to create your first task.',
+        SizedBox(height: 24),
+        Text('All clear! 🎉', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+        SizedBox(height: 8),
+        Text('You have no tasks yet.\nTap + to create your first task.',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500, height: 1.5)),
         const SizedBox(height: 28),

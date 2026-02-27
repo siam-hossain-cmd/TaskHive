@@ -17,12 +17,12 @@ class NotificationScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.bgColor,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.textPrimary)),
+        title: Text('Notifications', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppColors.textPrimary)),
         backgroundColor: AppColors.surfaceColor,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios_rounded, color: AppColors.textPrimary, size: 20),
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -65,12 +65,12 @@ class NotificationScreen extends ConsumerWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.notifications_off_rounded, size: 64, color: AppColors.primary),
+            child: Icon(Icons.notifications_off_rounded, size: 64, color: AppColors.primary),
           ),
-          const SizedBox(height: 24),
-          const Text('No Notifications Yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
-          const Text('You\'re all caught up! Check back later.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+          SizedBox(height: 24),
+          Text('No Notifications Yet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          SizedBox(height: 8),
+          Text('You\'re all caught up! Check back later.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -129,11 +129,11 @@ class NotificationScreen extends ConsumerWidget {
                       if (!notification.isRead)
                         Container(
                           width: 8, height: 8,
-                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     notification.body,
                     style: TextStyle(
@@ -142,10 +142,10 @@ class NotificationScreen extends ConsumerWidget {
                       color: notification.isRead ? AppColors.textSecondary : AppColors.textPrimary.withValues(alpha: 0.8),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     dateStr,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
                   ),
                 ],
               ),

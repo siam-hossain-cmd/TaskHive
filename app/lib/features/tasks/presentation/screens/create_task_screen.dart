@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/task_providers.dart';
 import '../../domain/models/task_model.dart';
+import '../../domain/models/ai_analysis_model.dart';
 import '../../../groups/data/repositories/group_repository.dart';
 import '../../../groups/domain/models/group_model.dart';
 import '../../../groups/presentation/providers/group_providers.dart';
@@ -23,9 +25,11 @@ import '../../../../core/services/api_service.dart';
 
 part 'create_task_steps.dart';
 part 'create_task_team_steps.dart';
+part 'create_task_ai_step.dart';
 
 // ─── Wizard State ─────────────────────────────────────────────────────────────
 enum _TaskMode { individual, team }
+
 enum _TeamSource { newTeam, existingTeam }
 
 class CreateTaskScreen extends ConsumerStatefulWidget {
@@ -73,7 +77,23 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   List<UserProfile> _searchResults = [];
   bool _searching = false;
 
-  int get _totalSteps => _mode == _TaskMode.team ? 4 : 3;
+  // ── AI Analysis
+  AIAnalysisResult? _aiResult;
+  bool _isAnalyzing = false;
+  String? _aiErrorMessage;
+  String? _pdfUploadUrl; // URL of the uploaded PDF for AI
+
+  bool get _hasPdfAttachment =>
+      _attachments.any((f) => f.path.toLowerCase().endsWith('.pdf'));
+
+  int get _totalSteps {
+    int count = 3; // Mode, Details+AI, Review
+    if (_mode == _TaskMode.team) count++; // +Team step
+    return count;
+  }
+
+  // Map step indices dynamically
+  int get _teamStepIndex => _mode == _TaskMode.team ? 2 : -1;
 
   @override
   void initState() {
@@ -105,8 +125,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
 
   void _goTo(int step) {
     setState(() => _step = step);
-    _pageCtrl.animateToPage(step,
-        duration: const Duration(milliseconds: 380), curve: Curves.easeInOut);
+    _pageCtrl.animateToPage(
+      step,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _next() {
@@ -115,7 +138,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       _snack('Please enter a task title');
       return;
     }
-    if (_step == 2 && _mode == _TaskMode.team) {
+    if (_step == _teamStepIndex && _mode == _TaskMode.team) {
       if (_teamSource == _TeamSource.newTeam &&
           _teamNameCtrl.text.trim().isEmpty) {
         _snack('Please enter a team name');
@@ -135,8 +158,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   }
 
   void _snack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
   }
 
   Future<void> _searchMembers(String q) async {
@@ -160,7 +184,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     setState(() {
       if (_isMemberSelected(f.friendUid)) {
         _selectedMembers.removeWhere((m) => m.friendUid == f.friendUid);
-        if (_leaderId == f.friendUid) { _leaderId = null; _leaderName = null; }
+        if (_leaderId == f.friendUid) {
+          _leaderId = null;
+          _leaderName = null;
+        }
       } else {
         _selectedMembers.add(f);
       }
@@ -171,15 +198,155 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     setState(() {
       if (_isMemberSelected(u.uid)) {
         _selectedMembers.removeWhere((m) => m.friendUid == u.uid);
-        if (_leaderId == u.uid) { _leaderId = null; _leaderName = null; }
+        if (_leaderId == u.uid) {
+          _leaderId = null;
+          _leaderName = null;
+        }
       } else {
-        _selectedMembers.add(FriendModel(
-          id: '', userId: '', friendUid: u.uid,
-          friendName: u.displayName, friendEmail: u.email,
-          connectedAt: DateTime.now(),
-        ));
+        _selectedMembers.add(
+          FriendModel(
+            id: '',
+            userId: '',
+            friendUid: u.uid,
+            friendName: u.displayName,
+            friendEmail: u.email,
+            connectedAt: DateTime.now(),
+          ),
+        );
       }
     });
+  }
+
+  // ── AI Methods ───────────────────────────────────────────────────────────
+
+  Future<String?> _uploadPdfForAnalysis() async {
+    final pdfFile = _attachments.firstWhere(
+      (f) => f.path.toLowerCase().endsWith('.pdf'),
+      orElse: () => File(''),
+    );
+    if (!pdfFile.existsSync()) return null;
+
+    try {
+      final user = ref.read(authStateProvider).valueOrNull;
+      if (user == null) return null;
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${pdfFile.path.split('/').last}';
+      final storageRef = FirebaseStorage.instance.ref(
+        'ai_analysis/${user.uid}/$fileName',
+      );
+      await storageRef.putFile(pdfFile);
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      print('PDF upload error: $e');
+      return null;
+    }
+  }
+
+  Future<void> _analyzeWithAI() async {
+    if (!_hasPdfAttachment) {
+      _snack('Please upload a PDF attachment first');
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+      _aiErrorMessage = null;
+    });
+
+    try {
+      // Upload PDF first
+      _pdfUploadUrl = await _uploadPdfForAnalysis();
+      if (_pdfUploadUrl == null) {
+        setState(() {
+          _isAnalyzing = false;
+          _aiErrorMessage = 'Failed to upload PDF. Please try again.';
+        });
+        return;
+      }
+
+      // Build team members list
+      List<Map<String, String>>? teamMembers;
+      if (_mode == _TaskMode.team) {
+        final user = ref.read(authStateProvider).valueOrNull;
+        final members = <Map<String, String>>[];
+        if (user != null) {
+          members.add({'id': user.uid, 'name': user.displayName ?? 'Me'});
+        }
+        for (final m in _selectedMembers) {
+          members.add({'id': m.friendUid, 'name': m.friendName});
+        }
+        if (_selectedGroup != null) {
+          for (final uid in _selectedGroup!.memberIds) {
+            if (!members.any((m) => m['id'] == uid)) {
+              members.add({'id': uid, 'name': uid});
+            }
+          }
+        }
+        teamMembers = members.isNotEmpty ? members : null;
+      }
+
+      final apiService = ref.read(apiServiceProvider);
+      final result = await apiService.analyzeAssignment(
+        pdfUrl: _pdfUploadUrl!,
+        title: _titleCtrl.text.trim().isNotEmpty
+            ? _titleCtrl.text.trim()
+            : null,
+        subject: _subjectCtrl.text.trim().isNotEmpty
+            ? _subjectCtrl.text.trim()
+            : null,
+        teamMembers: teamMembers,
+      );
+
+      if (result != null) {
+        setState(() {
+          _aiResult = result;
+          _isAnalyzing = false;
+          // Auto-fill title and subject if empty
+          if (_titleCtrl.text.trim().isEmpty && result.title.isNotEmpty) {
+            _titleCtrl.text = result.title;
+          }
+          if (_subjectCtrl.text.trim().isEmpty && result.subject.isNotEmpty) {
+            _subjectCtrl.text = result.subject;
+          }
+          if (_descCtrl.text.trim().isEmpty && result.summary.isNotEmpty) {
+            _descCtrl.text = result.summary;
+          }
+        });
+      } else {
+        setState(() {
+          _isAnalyzing = false;
+          _aiErrorMessage = 'AI analysis returned no results. Try again.';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isAnalyzing = false;
+        _aiErrorMessage = e.toString().replaceAll('Exception: ', '');
+      });
+    }
+  }
+
+  Future<void> _refineWithAI(String message) async {
+    if (_aiResult == null || (_aiResult!.conversationId ?? '').isEmpty) return;
+
+    final apiService = ref.read(apiServiceProvider);
+    final updated = await apiService.refineAnalysis(
+      conversationId: _aiResult!.conversationId!,
+      message: message,
+      currentSubtasks: _aiResult!.subtasks,
+    );
+
+    if (updated != null) {
+      setState(() {
+        _aiResult = AIAnalysisResult(
+          title: _aiResult!.title,
+          subject: _aiResult!.subject,
+          summary: _aiResult!.summary,
+          subtasks: updated,
+          conversationId: _aiResult!.conversationId,
+        );
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -189,8 +356,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
 
     try {
       final dueDateTime = DateTime(
-        _dueDate.year, _dueDate.month, _dueDate.day,
-        _dueTime.hour, _dueTime.minute,
+        _dueDate.year,
+        _dueDate.month,
+        _dueDate.day,
+        _dueTime.hour,
+        _dueTime.minute,
       );
 
       if (_mode == _TaskMode.individual || _isEditing) {
@@ -206,21 +376,28 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
           isRecurring: _isRecurring,
           recurrenceRule: _isRecurring ? _recurrenceRule : RecurrenceRule.none,
           attachments: _isEditing ? widget.existingTask!.attachments : [],
-          createdAt: _isEditing ? widget.existingTask!.createdAt : DateTime.now(),
+          createdAt: _isEditing
+              ? widget.existingTask!.createdAt
+              : DateTime.now(),
         );
         if (_isEditing) {
           await ref.read(taskNotifierProvider.notifier).updateTask(task);
         } else {
-          final created = await ref.read(taskNotifierProvider.notifier).createTask(task);
+          final created = await ref
+              .read(taskNotifierProvider.notifier)
+              .createTask(task);
           if (created != null && _attachments.isNotEmpty) {
             for (final file in _attachments) {
-              await ref.read(taskNotifierProvider.notifier).uploadAttachment(created.id, file);
+              await ref
+                  .read(taskNotifierProvider.notifier)
+                  .uploadAttachment(created.id, file);
             }
           }
         }
       } else {
         // Team task
         final repo = ref.read(groupRepositoryProvider);
+        final apiService = ref.read(apiServiceProvider);
         String groupId;
         String leaderId;
 
@@ -230,7 +407,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             ..._selectedMembers.map((m) => m.friendUid),
           ];
           final group = GroupModel(
-            id: '', name: _teamNameCtrl.text.trim(),
+            id: '',
+            name: _teamNameCtrl.text.trim(),
             leaderId: _leaderId ?? user.uid,
             memberIds: allMemberIds,
             permissionMode: _permMode,
@@ -243,42 +421,68 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
           leaderId = _selectedGroup!.leaderId;
         }
 
-        final assignedTo = _teamSource == _TeamSource.existingTeam
-            ? (_assigneeId ?? leaderId)
-            : (_leaderId ?? user.uid);
+        // If AI analysis is available, create as an assignment with subtasks
+        if (_aiResult != null && _aiResult!.subtasks.isNotEmpty) {
+          final subtasks = _aiResult!.subtasks
+              .map(
+                (s) => {
+                  'title': s.title,
+                  'description': s.description,
+                  'priority': s.priority.toLowerCase(),
+                  'assignedTo': s.assignedToId ?? leaderId,
+                  'assignedToName': s.assignedToName ?? '',
+                },
+              )
+              .toList();
 
-        final groupTask = GroupTaskModel(
-          id: '', groupId: groupId,
-          assignedTo: assignedTo,
-          assignedBy: user.uid,
-          title: _titleCtrl.text.trim(),
-          description: _descCtrl.text.trim(),
-          dueDate: dueDateTime,
-          priority: _priority.name,
-          status: GroupTaskStatus.pending,
-          createdAt: DateTime.now(),
-        );
-        await repo.createGroupTask(groupTask);
+          await apiService.createAssignment(
+            groupId: groupId,
+            title: _titleCtrl.text.trim(),
+            subject: _subjectCtrl.text.trim(),
+            summary: _aiResult!.summary,
+            originalPdfUrl: _pdfUploadUrl,
+            dueDate: dueDateTime.toIso8601String(),
+            subtasks: subtasks,
+          );
+        } else {
+          // Standard single group task (no AI)
+          final assignedTo = _teamSource == _TeamSource.existingTeam
+              ? (_assigneeId ?? leaderId)
+              : (_leaderId ?? user.uid);
 
-        // Notify Assignee if not self
-        if (assignedTo != user.uid) {
-          final notifRepo = ref.read(notificationRepositoryProvider);
-          final apiService = ref.read(apiServiceProvider);
-          final notif = NotificationModel(
+          final groupTask = GroupTaskModel(
             id: '',
-            title: 'New Task Assigned',
-            body: '${user.displayName} assigned you to: "${groupTask.title}"',
-            type: 'task_assigned',
+            groupId: groupId,
+            assignedTo: assignedTo,
+            assignedBy: user.uid,
+            title: _titleCtrl.text.trim(),
+            description: _descCtrl.text.trim(),
+            dueDate: dueDateTime,
+            priority: _priority.name,
+            status: GroupTaskStatus.pending,
             createdAt: DateTime.now(),
-            relatedId: groupId,
           );
-          await notifRepo.createNotification(assignedTo, notif);
-          await apiService.sendUserNotification(
-            targetUid: assignedTo,
-            title: notif.title,
-            body: notif.body,
-            payload: {'type': 'task_assigned', 'groupId': groupId},
-          );
+          await repo.createGroupTask(groupTask);
+
+          // Notify Assignee if not self
+          if (assignedTo != user.uid) {
+            final notifRepo = ref.read(notificationRepositoryProvider);
+            final notif = NotificationModel(
+              id: '',
+              title: 'New Task Assigned',
+              body: '${user.displayName} assigned you to: "${groupTask.title}"',
+              type: 'task_assigned',
+              createdAt: DateTime.now(),
+              relatedId: groupId,
+            );
+            await notifRepo.createNotification(assignedTo, notif);
+            await apiService.sendUserNotification(
+              targetUid: assignedTo,
+              title: notif.title,
+              body: notif.body,
+              payload: {'type': 'task_assigned', 'groupId': groupId},
+            );
+          }
         }
       }
 
@@ -310,7 +514,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     mode: _mode,
                     onSelect: (m) => setState(() => _mode = m),
                   ),
-                  _StepDetails(
+                  _StepDetailsWithAI(
                     titleCtrl: _titleCtrl,
                     descCtrl: _descCtrl,
                     subjectCtrl: _subjectCtrl,
@@ -327,6 +531,24 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     onRuleSelect: (r) => setState(() => _recurrenceRule = r),
                     onPickFiles: _pickFiles,
                     onRemoveFile: (i) => setState(() => _attachments.removeAt(i)),
+                    hasPdfAttachment: _hasPdfAttachment,
+                    isTeamMode: _mode == _TaskMode.team,
+                    analysis: _aiResult,
+                    isAnalyzing: _isAnalyzing,
+                    errorMessage: _aiErrorMessage,
+                    onAnalyze: _analyzeWithAI,
+                    onSubtasksUpdated: (updated) {
+                      setState(() {
+                        _aiResult = AIAnalysisResult(
+                          title: _aiResult!.title,
+                          subject: _aiResult!.subject,
+                          summary: _aiResult!.summary,
+                          subtasks: updated,
+                          conversationId: _aiResult!.conversationId,
+                        );
+                      });
+                    },
+                    onRefine: _refineWithAI,
                   ),
                   if (_mode == _TaskMode.team)
                     _StepTeam(
@@ -344,7 +566,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                       onToggleFriend: _toggleFriend,
                       onToggleSearch: _toggleSearchResult,
                       onSelectLeader: (uid, name) => setState(() {
-                        _leaderId = uid; _leaderName = name;
+                        _leaderId = uid;
+                        _leaderName = name;
                       }),
                       onPermMode: (m) => setState(() => _permMode = m),
                       selectedGroup: _selectedGroup,
@@ -352,11 +575,34 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                       assigneeName: _assigneeName,
                       onSelectGroup: (g) => setState(() {
                         _selectedGroup = g;
-                        _assigneeId = null; _assigneeName = null;
+                        _assigneeId = null;
+                        _assigneeName = null;
                       }),
                       onSelectAssignee: (id, name) => setState(() {
-                        _assigneeId = id; _assigneeName = name;
+                        _assigneeId = id;
+                        _assigneeName = name;
                       }),
+                      aiSubtasks: _aiResult?.subtasks,
+                      onAssignSubtask: (index, memberId, memberName) {
+                        setState(() {
+                          if (_aiResult != null) {
+                            final updated = List<AISubTask>.from(
+                              _aiResult!.subtasks,
+                            );
+                            updated[index] = updated[index].copyWith(
+                              assignedToId: memberId,
+                              assignedToName: memberName,
+                            );
+                            _aiResult = AIAnalysisResult(
+                              title: _aiResult!.title,
+                              subject: _aiResult!.subject,
+                              summary: _aiResult!.summary,
+                              subtasks: updated,
+                              conversationId: _aiResult!.conversationId,
+                            );
+                          }
+                        });
+                      },
                     ),
                   _StepReview(
                     mode: _mode,
@@ -371,6 +617,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     leaderName: _leaderName,
                     permMode: _permMode,
                     assigneeName: _assigneeName,
+                    aiResult: _aiResult,
                     onEdit: _goTo,
                   ),
                 ],
@@ -394,24 +641,37 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         color: AppColors.surfaceColor,
         boxShadow: AppTheme.softShadows,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => context.pop(),
             child: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: AppColors.bgColor, borderRadius: BorderRadius.circular(14)),
-              child: const Icon(Icons.close_rounded, size: 20, color: AppColors.textPrimary),
+                color: AppColors.bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 20,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Text(
               _isEditing ? 'Edit Task' : title,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           Container(
@@ -422,7 +682,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             ),
             child: Text(
               '${_step + 1} / $_totalSteps',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],
@@ -448,7 +712,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                   color: done || active ? AppColors.primary : AppColors.bgColor,
                   gradient: active
                       ? const LinearGradient(
-                          colors: [AppColors.primary, AppColors.secondary])
+                          colors: [AppColors.primary, AppColors.secondary],
+                        )
                       : null,
                 ),
               ),
@@ -466,7 +731,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       decoration: BoxDecoration(
         color: AppColors.surfaceColor,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, -4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
         ],
       ),
       child: Row(
@@ -475,10 +744,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             GestureDetector(
               onTap: _back,
               child: Container(
-                width: 52, height: 52,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.bgColor, borderRadius: BorderRadius.circular(18)),
-                child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.textPrimary),
+                  color: AppColors.bgColor,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           if (_step > 0) const SizedBox(width: 12),
@@ -491,24 +767,45 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [AppColors.primary, AppColors.secondary],
-                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
-                          BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Center(
                         child: _isLoading
-                            ? const SizedBox(width: 24, height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
+                              )
                             : Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
-                                  Icon(Icons.check_rounded, color: Colors.white, size: 22),
+                                  Icon(
+                                    Icons.check_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Create Task', style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                                  Text(
+                                    'Create Task',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ],
                               ),
                       ),
@@ -521,20 +818,36 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
                           colors: [AppColors.primary, AppColors.secondary],
-                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
-                          BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4)),
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
-                            Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                            Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
                             SizedBox(width: 8),
-                            Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ],
                         ),
                       ),
@@ -554,7 +867,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(primary: AppColors.primary)),
+          colorScheme: Theme.of(
+            context,
+          ).colorScheme.copyWith(primary: AppColors.primary),
+        ),
         child: child!,
       ),
     );
@@ -574,7 +890,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     );
     if (result != null) {
       setState(() {
-        _attachments.addAll(result.paths.where((p) => p != null).map((p) => File(p!)));
+        _attachments.addAll(
+          result.paths.where((p) => p != null).map((p) => File(p!)),
+        );
       });
     }
   }

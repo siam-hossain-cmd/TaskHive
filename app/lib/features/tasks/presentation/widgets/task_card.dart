@@ -130,7 +130,7 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
                             letterSpacing: -0.5,
                             color: isCompleted
                                 ? AppColors.textSecondary
-                                : AppColors.textPrimary,
+                                : AppColors.lightTextPrimary,
                             decoration: isCompleted ? TextDecoration.lineThrough : null,
                             decorationColor: AppColors.textSecondary,
                             decorationThickness: 2,
@@ -165,7 +165,9 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary.withValues(alpha: 0.7),
+                        color: isCompleted
+                            ? AppColors.textSecondary
+                            : AppColors.lightTextPrimary.withValues(alpha: 0.7),
                       ),
                     ),
                   
@@ -181,14 +183,14 @@ class _TaskCardState extends State<TaskCard> with SingleTickerProviderStateMixin
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isCompleted ? AppColors.textSecondary : AppColors.textPrimary.withValues(alpha: 0.6),
+                          color: isCompleted ? AppColors.textSecondary : AppColors.lightTextPrimary.withValues(alpha: 0.6),
                         ),
                       ),
                       Row(
                         children: [
                           Icon(
                             Icons.more_horiz_rounded,
-                            color: isCompleted ? AppColors.textSecondary : AppColors.textPrimary.withValues(alpha: 0.4),
+                            color: isCompleted ? AppColors.textSecondary : AppColors.lightTextPrimary.withValues(alpha: 0.4),
                           ),
                           const SizedBox(width: 16),
                           // Subtle complete action (doesn't have to be a checkbox if it breaks the clean look)

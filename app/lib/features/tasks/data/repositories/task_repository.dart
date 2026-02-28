@@ -61,12 +61,26 @@ class TaskRepository {
     await _tasksRef.doc(taskId).delete();
   }
 
-  // Mark complete
+  // Toggle complete / incomplete
   Future<void> markComplete(String taskId) async {
-    await _tasksRef.doc(taskId).update({
-      'status': TaskStatus.completed.name,
-      'completedAt': Timestamp.now(),
-    });
+    final doc = await _tasksRef.doc(taskId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    final currentStatus = data['status'] as String? ?? 'pending';
+
+    if (currentStatus == TaskStatus.completed.name) {
+      // Mark incomplete
+      await _tasksRef.doc(taskId).update({
+        'status': TaskStatus.pending.name,
+        'completedAt': null,
+      });
+    } else {
+      // Mark complete
+      await _tasksRef.doc(taskId).update({
+        'status': TaskStatus.completed.name,
+        'completedAt': Timestamp.now(),
+      });
+    }
   }
 
   // Upload file attachment
@@ -74,7 +88,14 @@ class TaskRepository {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
     final ref = _storage.ref('tasks/$userId/$taskId/$fileName');
     await ref.putFile(file);
-    return await ref.getDownloadURL();
+    final url = await ref.getDownloadURL();
+
+    // Save URL to the task's attachments array
+    await _tasksRef.doc(taskId).update({
+      'attachments': FieldValue.arrayUnion([url]),
+    });
+
+    return url;
   }
 
   // Get completed task count for analytics

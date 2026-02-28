@@ -6,7 +6,8 @@ import '../../features/tasks/domain/models/ai_analysis_model.dart';
 
 // Update with your actual computer's IP or localhost
 // For Android Emulator, use 10.0.2.2. For iOS Sim, use localhost or 127.0.0.1
-const String _baseUrl = 'http://localhost:3001/api';
+// For real device on Wi-Fi, use your Mac's local IP address
+const String _baseUrl = 'http://192.168.0.9:3001/api';
 
 class ApiService {
   final Ref _ref;

@@ -119,7 +119,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: TaskCard(
               task: t,
               onToggle: () => ref.read(taskNotifierProvider.notifier).markComplete(t.id),
-              onTap: () => context.push('/create-task'),
+              onTap: () => context.push('/task/${t.id}'),
             ),
           )),
         ],
@@ -132,7 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: TaskCard(
               task: t,
               onToggle: () => ref.read(taskNotifierProvider.notifier).markComplete(t.id),
-              onTap: () => context.push('/create-task'),
+              onTap: () => context.push('/task/${t.id}'),
             ),
           )),
         ],

@@ -363,7 +363,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         _dueTime.minute,
       );
 
-      if (_mode == _TaskMode.individual || _isEditing) {
+      if ((_mode == _TaskMode.individual && _aiResult == null) || _isEditing) {
+        // Simple personal task (no AI subtasks)
         final task = TaskModel(
           id: _isEditing ? widget.existingTask!.id : '',
           userId: user.uid,
@@ -394,6 +395,42 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             }
           }
         }
+      } else if (_mode == _TaskMode.individual && _aiResult != null && _aiResult!.subtasks.isNotEmpty) {
+        // Individual mode with AI subtasks — create a personal group + assignment
+        final repo = ref.read(groupRepositoryProvider);
+        final apiService = ref.read(apiServiceProvider);
+
+        final group = GroupModel(
+          id: '',
+          name: _titleCtrl.text.trim(),
+          leaderId: user.uid,
+          memberIds: [user.uid],
+          permissionMode: PermissionMode.leader,
+          createdAt: DateTime.now(),
+        );
+        final groupId = await repo.createGroupReturnId(group);
+
+        final subtasks = _aiResult!.subtasks
+            .map(
+              (s) => {
+                'title': s.title,
+                'description': s.description,
+                'priority': s.priority.toLowerCase(),
+                'assignedTo': user.uid,
+                'assignedToName': user.displayName ?? 'Me',
+              },
+            )
+            .toList();
+
+        await apiService.createAssignment(
+          groupId: groupId,
+          title: _titleCtrl.text.trim(),
+          subject: _subjectCtrl.text.trim(),
+          summary: _aiResult!.summary,
+          originalPdfUrl: _pdfUploadUrl,
+          dueDate: dueDateTime.toIso8601String(),
+          subtasks: subtasks,
+        );
       } else {
         // Team task
         final repo = ref.read(groupRepositoryProvider);

@@ -161,7 +161,7 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
   @override
   Widget build(BuildContext context) {
     final hasAnalysis = widget.analysis != null;
-    final showChat = hasAnalysis && widget.isTeamMode;
+    final showChat = hasAnalysis;
 
     return Column(
       children: [
@@ -264,9 +264,8 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                 // ── Attachments
                 _buildAttachments(),
 
-                // ── AI Subtasks (team mode only)
+                // ── AI Subtasks
                 if (hasAnalysis &&
-                    widget.isTeamMode &&
                     widget.analysis!.subtasks.isNotEmpty) ...[
                   const SizedBox(height: 28),
                   _buildSubtaskSection(),

@@ -73,7 +73,7 @@ router.post('/', authenticateUser, async (req, res) => {
             const taskData = {
                 groupId,
                 assignmentId,
-                assignedTo: subtask.assignedToId,
+                assignedTo: subtask.assignedToId || subtask.assignedTo || null,
                 assignedBy: req.user.uid,
                 title: subtask.title,
                 description: subtask.description || '',
@@ -93,9 +93,10 @@ router.post('/', authenticateUser, async (req, res) => {
             subtaskIds.push(taskRef.id);
 
             // Notify assigned member
-            if (subtask.assignedToId && subtask.assignedToId !== req.user.uid) {
+            const assigneeId = subtask.assignedToId || subtask.assignedTo;
+            if (assigneeId && assigneeId !== req.user.uid) {
                 notificationPromises.push(
-                    notifyUser(subtask.assignedToId, 'New Task Assigned', 
+                    notifyUser(assigneeId, 'New Task Assigned', 
                         `You've been assigned: "${subtask.title}"`, {
                             type: 'task_assigned',
                             relatedId: assignmentId,

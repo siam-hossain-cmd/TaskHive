@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/services/api_service.dart';
@@ -234,6 +235,16 @@ class _AssignmentDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // View File Button
+          if (assignment.originalPdfUrl != null)
+            _buildViewFileButton(
+              label: 'View Original File',
+              url: assignment.originalPdfUrl!,
+              icon: Icons.description_rounded,
+            ),
+          if (assignment.originalPdfUrl != null)
+            const SizedBox(height: 12),
+
           // Progress Card
           _ProgressCard(
             progress: progress,
@@ -447,6 +458,93 @@ class _AssignmentDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Assignment completed!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _buildViewFileButton({
+    required String label,
+    required String url,
+    required IconData icon,
+  }) {
+    return GestureDetector(
+      onTap: () => _openFile(url),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 20, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  Text(
+                    _getFileType(url),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.open_in_new_rounded,
+              size: 18,
+              color: AppColors.primary.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getFileType(String url) {
+    final lower = url.toLowerCase();
+    if (lower.contains('.pdf')) return 'PDF Document';
+    if (lower.contains('.doc') || lower.contains('.docx')) return 'Word Document';
+    if (lower.contains('.png') || lower.contains('.jpg') || lower.contains('.jpeg')) return 'Image';
+    if (lower.contains('.xls') || lower.contains('.xlsx')) return 'Spreadsheet';
+    if (lower.contains('.ppt') || lower.contains('.pptx')) return 'Presentation';
+    return 'File';
+  }
+
+  Future<void> _openFile(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open the file'),
           behavior: SnackBarBehavior.floating,
         ),
       );

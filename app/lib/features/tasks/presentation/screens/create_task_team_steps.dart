@@ -1256,17 +1256,21 @@ class _ReviewRow extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
-          const Spacer(),
-          valueWidget ??
-              Text(
-                value ?? '',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+          const SizedBox(width: 8),
+          Flexible(
+            child: valueWidget ??
+                Text(
+                  value ?? '',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.right,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
-                textAlign: TextAlign.right,
-              ),
+          ),
         ],
       ),
     );

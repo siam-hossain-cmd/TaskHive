@@ -25,6 +25,7 @@ import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/notifications/presentation/screens/notification_screen.dart';
 import '../../features/tasks/presentation/screens/assignment_detail_screen.dart';
 import '../../features/tasks/presentation/screens/submission_detail_screen.dart';
+import '../../features/tasks/presentation/screens/task_detail_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
@@ -105,6 +106,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           final friend = state.extra as FriendModel?;
           return MaterialPage(
             child: FriendChatScreen(friendUid: friendUid, friend: friend),
+          );
+        },
+      ),
+
+      // Task Detail
+      GoRoute(
+        path: '/task/:taskId',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final taskId = state.pathParameters['taskId'] ?? '';
+          return MaterialPage(
+            child: TaskDetailScreen(taskId: taskId),
           );
         },
       ),

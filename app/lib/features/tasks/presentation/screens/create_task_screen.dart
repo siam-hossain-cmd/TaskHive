@@ -59,6 +59,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   TaskPriority _priority = TaskPriority.medium;
   bool _isRecurring = false;
   RecurrenceRule _recurrenceRule = RecurrenceRule.none;
+  int _estimatedMinutes = 60;
   List<File> _attachments = [];
 
   // ── Step 3: Team
@@ -109,6 +110,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       _priority = t.priority;
       _isRecurring = t.isRecurring;
       _recurrenceRule = t.recurrenceRule;
+      _estimatedMinutes = t.estimatedMinutes;
     }
   }
 
@@ -376,6 +378,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
           status: _isEditing ? widget.existingTask!.status : TaskStatus.pending,
           isRecurring: _isRecurring,
           recurrenceRule: _isRecurring ? _recurrenceRule : RecurrenceRule.none,
+          estimatedMinutes: _estimatedMinutes,
           attachments: _isEditing ? widget.existingTask!.attachments : [],
           createdAt: _isEditing
               ? widget.existingTask!.createdAt
@@ -395,7 +398,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             }
           }
         }
-      } else if (_mode == _TaskMode.individual && _aiResult != null && _aiResult!.subtasks.isNotEmpty) {
+      } else if (_mode == _TaskMode.individual &&
+          _aiResult != null &&
+          _aiResult!.subtasks.isNotEmpty) {
         // Individual mode with AI subtasks — create a personal group + assignment
         final repo = ref.read(groupRepositoryProvider);
         final apiService = ref.read(apiServiceProvider);
@@ -560,14 +565,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     priority: _priority,
                     isRecurring: _isRecurring,
                     recurrenceRule: _recurrenceRule,
+                    estimatedMinutes: _estimatedMinutes,
                     attachments: _attachments,
                     onDateTap: _pickDate,
                     onTimeTap: _pickTime,
                     onPriority: (p) => setState(() => _priority = p),
                     onRecurringToggle: (v) => setState(() => _isRecurring = v),
                     onRuleSelect: (r) => setState(() => _recurrenceRule = r),
+                    onEstimatedMinutesChanged: (v) =>
+                        setState(() => _estimatedMinutes = v),
                     onPickFiles: _pickFiles,
-                    onRemoveFile: (i) => setState(() => _attachments.removeAt(i)),
+                    onRemoveFile: (i) =>
+                        setState(() => _attachments.removeAt(i)),
                     hasPdfAttachment: _hasPdfAttachment,
                     isTeamMode: _mode == _TaskMode.team,
                     analysis: _aiResult,

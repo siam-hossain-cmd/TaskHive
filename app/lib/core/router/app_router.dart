@@ -116,9 +116,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final taskId = state.pathParameters['taskId'] ?? '';
-          return MaterialPage(
-            child: TaskDetailScreen(taskId: taskId),
-          );
+          return MaterialPage(child: TaskDetailScreen(taskId: taskId));
         },
       ),
 

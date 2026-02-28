@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Users, Component, CheckCircle, Bell, Activity, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Component, CheckCircle, Bell, Activity, ClipboardList, BrainCircuit, BarChart3 } from 'lucide-react';
 
 const navItems = [
     { to: '/', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -12,10 +12,15 @@ const navItems = [
     { to: '/audit', label: 'Audit Logs', icon: <ClipboardList size={18} /> },
 ];
 
+const aiNavItems = [
+    { to: '/ai-settings', label: 'AI Settings', icon: <BrainCircuit size={18} /> },
+    { to: '/ai-usage', label: 'AI Usage', icon: <BarChart3 size={18} /> },
+];
+
 export default function Layout({ children, admin, onLogout }) {
     const location = useLocation();
 
-    const pageTitle = navItems.find(n => {
+    const pageTitle = [...navItems, ...aiNavItems].find(n => {
         if (n.to === '/') return location.pathname === '/';
         return location.pathname.startsWith(n.to);
     })?.label || 'Dashboard';
@@ -38,6 +43,18 @@ export default function Layout({ children, admin, onLogout }) {
                         key={to}
                         to={to}
                         end={to === '/'}
+                        className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                    >
+                        <span className="icon">{icon}</span>
+                        {label}
+                    </NavLink>
+                ))}
+
+                <div className="nav-section">AI Management</div>
+                {aiNavItems.map(({ to, label, icon }) => (
+                    <NavLink
+                        key={to}
+                        to={to}
                         className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
                     >
                         <span className="icon">{icon}</span>

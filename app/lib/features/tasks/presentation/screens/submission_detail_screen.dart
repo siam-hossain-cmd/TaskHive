@@ -79,9 +79,11 @@ class _SubmissionDetailScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // View Files
-                        if (task.submissionUrl != null || task.attachments.isNotEmpty)
+                        if (task.submissionUrl != null ||
+                            task.attachments.isNotEmpty)
                           _buildViewFilesSection(task),
-                        if (task.submissionUrl != null || task.attachments.isNotEmpty)
+                        if (task.submissionUrl != null ||
+                            task.attachments.isNotEmpty)
                           const SizedBox(height: 16),
 
                         // Task Info Card
@@ -359,9 +361,7 @@ class _SubmissionDetailScreenState
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -412,10 +412,15 @@ class _SubmissionDetailScreenState
   String _getFileType(String url) {
     final lower = url.toLowerCase();
     if (lower.contains('.pdf')) return 'PDF Document';
-    if (lower.contains('.doc') || lower.contains('.docx')) return 'Word Document';
-    if (lower.contains('.png') || lower.contains('.jpg') || lower.contains('.jpeg')) return 'Image';
+    if (lower.contains('.doc') || lower.contains('.docx'))
+      return 'Word Document';
+    if (lower.contains('.png') ||
+        lower.contains('.jpg') ||
+        lower.contains('.jpeg'))
+      return 'Image';
     if (lower.contains('.xls') || lower.contains('.xlsx')) return 'Spreadsheet';
-    if (lower.contains('.ppt') || lower.contains('.pptx')) return 'Presentation';
+    if (lower.contains('.ppt') || lower.contains('.pptx'))
+      return 'Presentation';
     return 'File';
   }
 

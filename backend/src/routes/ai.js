@@ -1,8 +1,84 @@
 const express = require('express');
-const { db, messaging } = require('../firebase');
+const { db, messaging, auth } = require('../firebase');
 const { authenticateUser } = require('../middleware/auth');
 
 const router = express.Router();
+
+// ─── Helper: Check AI access & rate limits ────────────────────────────────────
+async function checkAIAccess(userId) {
+    // Check global AI enabled
+    const settingsDoc = await db.collection('app_config').doc('ai_settings').get();
+    const settings = settingsDoc.exists ? settingsDoc.data() : { enabled: true };
+    if (settings.enabled === false) {
+        return { allowed: false, reason: 'AI features are currently disabled by admin' };
+    }
+
+    // Check per-user access
+    const accessDoc = await db.collection('ai_user_access').doc(userId).get();
+    if (accessDoc.exists && accessDoc.data().enabled === false) {
+        return { allowed: false, reason: 'AI access has been disabled for your account' };
+    }
+
+    // Check rate limits
+    const limits = settings.rateLimits || { maxRequestsPerHour: 20, maxRequestsPerDay: 100 };
+    const userQuota = accessDoc.exists ? accessDoc.data().customQuota : null;
+    const effectiveLimits = userQuota || limits;
+
+    const now = new Date();
+    const oneHourAgo = new Date(now - 60 * 60 * 1000).toISOString();
+    const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+
+    // Count requests in last hour
+    const hourSnap = await db.collection('ai_usage_logs')
+        .where('userId', '==', userId)
+        .where('timestamp', '>=', oneHourAgo)
+        .get();
+    if (hourSnap.size >= effectiveLimits.maxRequestsPerHour) {
+        return { allowed: false, reason: `Rate limit exceeded: max ${effectiveLimits.maxRequestsPerHour} requests per hour` };
+    }
+
+    // Count requests in last day
+    const daySnap = await db.collection('ai_usage_logs')
+        .where('userId', '==', userId)
+        .where('timestamp', '>=', oneDayAgo)
+        .get();
+    if (daySnap.size >= effectiveLimits.maxRequestsPerDay) {
+        return { allowed: false, reason: `Daily limit exceeded: max ${effectiveLimits.maxRequestsPerDay} requests per day` };
+    }
+
+    return { allowed: true, settings };
+}
+
+// ─── Helper: Log AI usage ─────────────────────────────────────────────────────
+async function logAIUsage({ userId, endpoint, status, tokensUsed = 0, durationMs = 0, error = null }) {
+    try {
+        // Try to get user info
+        let userName = 'Unknown', userEmail = '';
+        try {
+            const userRecord = await auth.getUser(userId);
+            userName = userRecord.displayName || 'Unknown';
+            userEmail = userRecord.email || '';
+        } catch (_) { /* ignore */ }
+
+        // Estimate cost (Gemini Flash pricing: ~$0.075/1M input, ~$0.30/1M output)
+        const estimatedCost = (tokensUsed / 1000000) * 0.15;
+
+        await db.collection('ai_usage_logs').add({
+            userId,
+            userName,
+            userEmail,
+            endpoint,
+            status,
+            tokensUsed,
+            estimatedCost: Math.round(estimatedCost * 10000) / 10000,
+            durationMs,
+            error: error ? String(error).substring(0, 200) : null,
+            timestamp: new Date().toISOString(),
+        });
+    } catch (err) {
+        console.error('Failed to log AI usage:', err);
+    }
+}
 
 // ─── Helper: Download PDF and extract text ────────────────────────────────────
 async function extractTextFromPdf(pdfUrl) {
@@ -97,7 +173,14 @@ async function callGeminiAI(prompt, systemPrompt) {
 
 // ─── POST /api/ai/analyze — Analyze PDF and break into subtasks ──────────────
 router.post('/analyze', authenticateUser, async (req, res) => {
+    const startTime = Date.now();
     try {
+        // Check AI access and rate limits
+        const access = await checkAIAccess(req.user.uid);
+        if (!access.allowed) {
+            return res.status(429).json({ error: access.reason });
+        }
+
         const { pdfUrl, teamMembers, title, subject } = req.body;
 
         if (!pdfUrl) {
@@ -187,6 +270,15 @@ Return the structured JSON breakdown.`;
             createdAt: new Date().toISOString(),
         });
 
+        // Log successful usage
+        await logAIUsage({
+            userId: req.user.uid,
+            endpoint: 'analyze',
+            status: 'success',
+            tokensUsed: truncatedText.length + JSON.stringify(analysis).length,
+            durationMs: Date.now() - startTime,
+        });
+
         return res.json({
             success: true,
             analysis,
@@ -194,6 +286,14 @@ Return the structured JSON breakdown.`;
         });
     } catch (err) {
         console.error('AI Analysis Error:', err);
+        // Log failed usage
+        await logAIUsage({
+            userId: req.user.uid,
+            endpoint: 'analyze',
+            status: 'error',
+            durationMs: Date.now() - startTime,
+            error: err.message,
+        });
         return res.status(500).json({
             error: 'Failed to analyze assignment',
             details: err.message,
@@ -203,7 +303,14 @@ Return the structured JSON breakdown.`;
 
 // ─── POST /api/ai/refine — Modify breakdown via AI chat ─────────────────────
 router.post('/refine', authenticateUser, async (req, res) => {
+    const startTime = Date.now();
     try {
+        // Check AI access and rate limits
+        const access = await checkAIAccess(req.user.uid);
+        if (!access.allowed) {
+            return res.status(429).json({ error: access.reason });
+        }
+
         const { conversationId, message, currentSubtasks } = req.body;
 
         if (!conversationId || !message) {
@@ -255,6 +362,15 @@ Apply the requested changes and return the complete updated subtasks array as JS
             messages: updatedMessages,
         });
 
+        // Log successful usage
+        await logAIUsage({
+            userId: req.user.uid,
+            endpoint: 'refine',
+            status: 'success',
+            tokensUsed: message.length + JSON.stringify(result).length,
+            durationMs: Date.now() - startTime,
+        });
+
         return res.json({
             success: true,
             message: result.message || 'Breakdown updated successfully',
@@ -262,6 +378,14 @@ Apply the requested changes and return the complete updated subtasks array as JS
         });
     } catch (err) {
         console.error('AI Refine Error:', err);
+        // Log failed usage
+        await logAIUsage({
+            userId: req.user.uid,
+            endpoint: 'refine',
+            status: 'error',
+            durationMs: Date.now() - startTime,
+            error: err.message,
+        });
         return res.status(500).json({
             error: 'Failed to refine breakdown',
             details: err.message,

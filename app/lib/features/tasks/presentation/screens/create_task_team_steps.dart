@@ -1258,7 +1258,8 @@ class _ReviewRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Flexible(
-            child: valueWidget ??
+            child:
+                valueWidget ??
                 Text(
                   value ?? '',
                   style: TextStyle(

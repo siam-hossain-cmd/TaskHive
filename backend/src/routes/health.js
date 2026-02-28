@@ -29,6 +29,38 @@ router.get('/', async (req, res) => {
             authStatus = 'error';
         }
 
+        // Check AI Service (Gemini) connectivity
+        let aiStatus = 'ok';
+        let aiLatency = 0;
+        let aiModel = 'unknown';
+        let aiEnabled = true;
+        try {
+            // Check settings
+            const settingsDoc = await db.collection('app_config').doc('ai_settings').get();
+            const settings = settingsDoc.exists ? settingsDoc.data() : {};
+            aiEnabled = settings.enabled !== false;
+            aiModel = settings.model || 'gemini-2.5-flash';
+
+            if (aiEnabled) {
+                const apiKey = settings.apiKey || process.env.GEMINI_API_KEY;
+                if (!apiKey) {
+                    aiStatus = 'no_key';
+                } else {
+                    const { GoogleGenerativeAI } = require('@google/generative-ai');
+                    const genAI = new GoogleGenerativeAI(apiKey);
+                    const model = genAI.getGenerativeModel({ model: aiModel });
+                    const t = Date.now();
+                    await model.generateContent('ping');
+                    aiLatency = Date.now() - t;
+                }
+            } else {
+                aiStatus = 'disabled';
+            }
+        } catch (err) {
+            aiStatus = 'error';
+            console.error('AI health check error:', err.message);
+        }
+
         const uptime = process.uptime();
         const memory = process.memoryUsage();
 
@@ -41,6 +73,7 @@ router.get('/', async (req, res) => {
                 firestore: { status: firestoreStatus, latencyMs: firestoreLatency },
                 auth: { status: authStatus },
                 server: { status: 'ok' },
+                ai: { status: aiStatus, latencyMs: aiLatency, model: aiModel, enabled: aiEnabled },
             },
             system: {
                 platform: os.platform(),

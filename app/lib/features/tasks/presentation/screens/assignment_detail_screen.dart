@@ -242,8 +242,7 @@ class _AssignmentDetailScreenState
               url: assignment.originalPdfUrl!,
               icon: Icons.description_rounded,
             ),
-          if (assignment.originalPdfUrl != null)
-            const SizedBox(height: 12),
+          if (assignment.originalPdfUrl != null) const SizedBox(height: 12),
 
           // Progress Card
           _ProgressCard(
@@ -477,9 +476,7 @@ class _AssignmentDetailScreenState
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -530,10 +527,15 @@ class _AssignmentDetailScreenState
   String _getFileType(String url) {
     final lower = url.toLowerCase();
     if (lower.contains('.pdf')) return 'PDF Document';
-    if (lower.contains('.doc') || lower.contains('.docx')) return 'Word Document';
-    if (lower.contains('.png') || lower.contains('.jpg') || lower.contains('.jpeg')) return 'Image';
+    if (lower.contains('.doc') || lower.contains('.docx'))
+      return 'Word Document';
+    if (lower.contains('.png') ||
+        lower.contains('.jpg') ||
+        lower.contains('.jpeg'))
+      return 'Image';
     if (lower.contains('.xls') || lower.contains('.xlsx')) return 'Spreadsheet';
-    if (lower.contains('.ppt') || lower.contains('.pptx')) return 'Presentation';
+    if (lower.contains('.ppt') || lower.contains('.pptx'))
+      return 'Presentation';
     return 'File';
   }
 

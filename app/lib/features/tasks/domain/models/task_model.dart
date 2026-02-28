@@ -21,6 +21,7 @@ class TaskModel {
   final DateTime? completedAt;
   final DateTime createdAt;
   final String? groupId;
+  final int estimatedMinutes;
 
   TaskModel({
     required this.id,
@@ -37,6 +38,7 @@ class TaskModel {
     this.completedAt,
     required this.createdAt,
     this.groupId,
+    this.estimatedMinutes = 60,
   });
 
   bool get isOverdue =>
@@ -70,6 +72,7 @@ class TaskModel {
       completedAt: (data['completedAt'] as Timestamp?)?.toDate(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       groupId: data['groupId'],
+      estimatedMinutes: data['estimatedMinutes'] ?? 60,
     );
   }
 
@@ -85,9 +88,12 @@ class TaskModel {
       'isRecurring': isRecurring,
       'recurrenceRule': recurrenceRule.name,
       'attachments': attachments,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'completedAt': completedAt != null
+          ? Timestamp.fromDate(completedAt!)
+          : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'groupId': groupId,
+      'estimatedMinutes': estimatedMinutes,
     };
   }
 
@@ -106,6 +112,7 @@ class TaskModel {
     DateTime? completedAt,
     DateTime? createdAt,
     String? groupId,
+    int? estimatedMinutes,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -122,6 +129,7 @@ class TaskModel {
       completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,
       groupId: groupId ?? this.groupId,
+      estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
     );
   }
 }

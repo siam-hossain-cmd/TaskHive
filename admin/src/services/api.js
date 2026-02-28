@@ -44,3 +44,12 @@ export const deleteTask = (id) => api.delete(`/tasks/${id}`);
 
 export const getHealth = () => api.get('/health');
 export const getAuditLogs = () => api.get('/audit');
+
+// ── AI Admin ──────────────────────────────────────────
+export const getAISettings = () => api.get('/ai-admin/settings');
+export const updateAISettings = (data) => api.put('/ai-admin/settings', data);
+export const testAIConnection = () => api.post('/ai-admin/settings/test');
+export const getAIUsage = (period = '7d') => api.get(`/ai-admin/usage?period=${period}`);
+export const getAIUserUsage = (uid) => api.get(`/ai-admin/usage/${uid}`);
+export const updateAIAccess = (uid, data) => api.patch(`/ai-admin/access/${uid}`, data);
+export const getAIConversations = () => api.get('/ai-admin/conversations');

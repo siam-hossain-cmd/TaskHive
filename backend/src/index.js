@@ -13,6 +13,7 @@ const taskRoutes = require('./routes/tasks');
 const healthRoutes = require('./routes/health');
 const auditRoutes = require('./routes/audit');
 const aiRoutes = require('./routes/ai');
+const aiAdminRoutes = require('./routes/ai-admin');
 const assignmentRoutes = require('./routes/assignments');
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/ai-admin', aiAdminRoutes);
 app.use('/api/assignments', assignmentRoutes);
 
 // ─── Root ─────────────────────────────────────────────────────────────────────

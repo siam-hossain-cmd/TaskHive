@@ -191,3 +191,26 @@ tbody tr:hover td { color: var(--text); }
 .health-service { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border-radius: var(--radius); border: 1px solid var(--border); }
 .health-name { font-weight: 600; font-size: 14px; }
 .health-latency { font-size: 12px; color: var(--text-3); }
+
+/* ── Toggle Switch ───────────────────────────────────── */
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 24px; transition: all 0.25s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; height: 18px; width: 18px;
+  left: 2px; bottom: 2px; background: var(--text-3);
+  border-radius: 50%; transition: all 0.25s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--primary-200); border-color: var(--primary); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); background: var(--primary); }
+
+/* ── Spin animation for loading icons ────────────────── */
+.spin-icon { animation: spin 1s linear infinite; }
+
+/* ── Select dropdown styling ─────────────────────────── */
+select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer; }
+select.input option { background: var(--surface); color: var(--text); }

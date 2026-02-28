@@ -11,6 +11,8 @@ import Tasks from './pages/Tasks';
 import Notifications from './pages/Notifications';
 import Health from './pages/Health';
 import Audit from './pages/Audit';
+import AISettings from './pages/AISettings';
+import AIUsage from './pages/AIUsage';
 
 function App() {
     const [admin, setAdmin] = useState(null);
@@ -45,6 +47,8 @@ function App() {
                     <Route path="/notifications" element={<Notifications />} />
                     <Route path="/health" element={<Health />} />
                     <Route path="/audit" element={<Audit />} />
+                    <Route path="/ai-settings" element={<AISettings />} />
+                    <Route path="/ai-usage" element={<AIUsage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Layout>

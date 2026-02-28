@@ -36,8 +36,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.search_off_rounded,
-                        size: 56, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 56,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'Task not found',
@@ -52,7 +55,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                       onTap: () => context.pop(),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 10),
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(14),
@@ -76,8 +81,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: CircularProgressIndicator(color: AppColors.primary),
           ),
           error: (e, _) => Center(
-            child: Text('Error: $e',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(
+              'Error: $e',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
         ),
       ),
@@ -98,7 +105,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── View Files ──
-                if (task.attachments.isNotEmpty) ...[  
+                if (task.attachments.isNotEmpty) ...[
                   _buildViewFilesSection(task),
                   const SizedBox(height: 16),
                 ],
@@ -373,11 +380,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ],
           if (task.groupId != null) ...[
             const Divider(height: 20),
-            _detailRow(
-              Icons.group_rounded,
-              'Group Task',
-              'Yes',
-            ),
+            _detailRow(Icons.group_rounded, 'Group Task', 'Yes'),
           ],
         ],
       ),
@@ -562,9 +565,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               ),
             );
             if (confirm == true && mounted) {
-              await ref
-                  .read(taskNotifierProvider.notifier)
-                  .deleteTask(task.id);
+              await ref.read(taskNotifierProvider.notifier).deleteTask(task.id);
               if (mounted) context.pop();
             }
           },
@@ -578,8 +579,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.delete_outline_rounded,
-                    size: 20, color: AppColors.error),
+                Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: AppColors.error,
+                ),
                 SizedBox(width: 8),
                 Text(
                   'Delete Task',
@@ -677,9 +681,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.2),
-          ),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -730,10 +732,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   String _getFileType(String url) {
     final lower = url.toLowerCase();
     if (lower.contains('.pdf')) return 'PDF Document';
-    if (lower.contains('.doc') || lower.contains('.docx')) return 'Word Document';
-    if (lower.contains('.png') || lower.contains('.jpg') || lower.contains('.jpeg')) return 'Image';
+    if (lower.contains('.doc') || lower.contains('.docx'))
+      return 'Word Document';
+    if (lower.contains('.png') ||
+        lower.contains('.jpg') ||
+        lower.contains('.jpeg'))
+      return 'Image';
     if (lower.contains('.xls') || lower.contains('.xlsx')) return 'Spreadsheet';
-    if (lower.contains('.ppt') || lower.contains('.pptx')) return 'Presentation';
+    if (lower.contains('.ppt') || lower.contains('.pptx'))
+      return 'Presentation';
     return 'File';
   }
 

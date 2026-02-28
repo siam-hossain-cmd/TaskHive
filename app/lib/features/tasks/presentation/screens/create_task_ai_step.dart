@@ -13,11 +13,13 @@ class _StepDetailsWithAI extends StatefulWidget {
   final TaskPriority priority;
   final bool isRecurring;
   final RecurrenceRule recurrenceRule;
+  final int estimatedMinutes;
   final List<File> attachments;
   final VoidCallback onDateTap, onTimeTap, onPickFiles;
   final ValueChanged<TaskPriority> onPriority;
   final ValueChanged<bool> onRecurringToggle;
   final ValueChanged<RecurrenceRule> onRuleSelect;
+  final ValueChanged<int> onEstimatedMinutesChanged;
   final ValueChanged<int> onRemoveFile;
 
   // ── AI
@@ -39,6 +41,7 @@ class _StepDetailsWithAI extends StatefulWidget {
     required this.priority,
     required this.isRecurring,
     required this.recurrenceRule,
+    required this.estimatedMinutes,
     required this.attachments,
     required this.onDateTap,
     required this.onTimeTap,
@@ -46,6 +49,7 @@ class _StepDetailsWithAI extends StatefulWidget {
     required this.onPriority,
     required this.onRecurringToggle,
     required this.onRuleSelect,
+    required this.onEstimatedMinutesChanged,
     required this.onRemoveFile,
     required this.hasPdfAttachment,
     required this.isTeamMode,
@@ -132,17 +136,21 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
     try {
       await widget.onRefine(text);
       setState(() {
-        _chatHistory.add(_ChatBubble(
-          text: 'Done! I\'ve updated the subtasks based on your feedback.',
-          isUser: false,
-        ));
+        _chatHistory.add(
+          _ChatBubble(
+            text: 'Done! I\'ve updated the subtasks based on your feedback.',
+            isUser: false,
+          ),
+        );
       });
     } catch (_) {
       setState(() {
-        _chatHistory.add(_ChatBubble(
-          text: 'Sorry, I couldn\'t process that. Please try again.',
-          isUser: false,
-        ));
+        _chatHistory.add(
+          _ChatBubble(
+            text: 'Sorry, I couldn\'t process that. Please try again.',
+            isUser: false,
+          ),
+        );
       });
     } finally {
       setState(() => _isRefining = false);
@@ -257,6 +265,12 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                 _buildPriorityRow(),
                 const SizedBox(height: 20),
 
+                // ── Estimated Time
+                _sectionLabel('Estimated Time'),
+                const SizedBox(height: 10),
+                _buildEstimatedTimeRow(),
+                const SizedBox(height: 20),
+
                 // ── Recurring
                 _buildRecurringSection(),
                 const SizedBox(height: 20),
@@ -265,8 +279,7 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                 _buildAttachments(),
 
                 // ── AI Subtasks
-                if (hasAnalysis &&
-                    widget.analysis!.subtasks.isNotEmpty) ...[
+                if (hasAnalysis && widget.analysis!.subtasks.isNotEmpty) ...[
                   const SizedBox(height: 28),
                   _buildSubtaskSection(),
                 ],
@@ -486,9 +499,9 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                   boxShadow: _aiAutoFillEnabled
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF667EEA).withValues(
-                              alpha: 0.3,
-                            ),
+                            color: const Color(
+                              0xFF667EEA,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -522,8 +535,8 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                     Text(
                       _aiAutoFillEnabled
                           ? (widget.hasPdfAttachment
-                              ? 'PDF ready \u2022 Tap Analyze to fill'
-                              : 'Upload a PDF to auto-fill')
+                                ? 'PDF ready \u2022 Tap Analyze to fill'
+                                : 'Upload a PDF to auto-fill')
                           : 'Turned off \u2022 Fill manually',
                       style: TextStyle(
                         fontSize: 12,
@@ -552,8 +565,9 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                     }
                   },
                   activeTrackColor: const Color(0xFF667EEA),
-                  inactiveTrackColor:
-                      AppColors.textSecondary.withValues(alpha: 0.2),
+                  inactiveTrackColor: AppColors.textSecondary.withValues(
+                    alpha: 0.2,
+                  ),
                 ),
               ),
             ],
@@ -665,10 +679,7 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
             if (isAIFilled) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
@@ -766,6 +777,74 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
   }
 
   // ═══════════════════════════════════════════════════════
+  //  ESTIMATED TIME ROW
+  // ═══════════════════════════════════════════════════════
+  Widget _buildEstimatedTimeRow() {
+    final options = [15, 30, 45, 60, 90, 120];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((mins) {
+        final isSelected = widget.estimatedMinutes == mins;
+        final label = mins < 60
+            ? '${mins}m'
+            : mins == 60
+            ? '1h'
+            : '${mins ~/ 60}h ${mins % 60 > 0 ? '${mins % 60}m' : ''}';
+        return GestureDetector(
+          onTap: () => widget.onEstimatedMinutesChanged(mins),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.12)
+                  : AppColors.surfaceColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : AppTheme.softShadows,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  size: 16,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  label.trim(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════
   //  RECURRING SECTION
   // ═══════════════════════════════════════════════════════
   Widget _buildRecurringSection() {
@@ -812,45 +891,47 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
               children: RecurrenceRule.values
                   .where((r) => r != RecurrenceRule.none)
                   .map((r) {
-                final isSel = widget.recurrenceRule == r;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: r != RecurrenceRule.monthly ? 8 : 0,
-                    ),
-                    child: GestureDetector(
-                      onTap: () => widget.onRuleSelect(r),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isSel
-                              ? AppColors.primary.withValues(alpha: 0.12)
-                              : AppColors.bgColor,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSel
-                                ? AppColors.primary
-                                : Colors.transparent,
-                          ),
+                    final isSel = widget.recurrenceRule == r;
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: r != RecurrenceRule.monthly ? 8 : 0,
                         ),
-                        child: Center(
-                          child: Text(
-                            r.name[0].toUpperCase() + r.name.substring(1),
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight:
-                                  isSel ? FontWeight.w800 : FontWeight.w600,
+                        child: GestureDetector(
+                          onTap: () => widget.onRuleSelect(r),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
                               color: isSel
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
+                                  ? AppColors.primary.withValues(alpha: 0.12)
+                                  : AppColors.bgColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSel
+                                    ? AppColors.primary
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                r.name[0].toUpperCase() + r.name.substring(1),
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSel
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
+                                  color: isSel
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  })
+                  .toList(),
             ),
           ],
         ],
@@ -925,9 +1006,7 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                   boxShadow: AppTheme.softShadows,
                   border: isPdf
                       ? Border.all(
-                          color: const Color(0xFF667EEA).withValues(
-                            alpha: 0.2,
-                          ),
+                          color: const Color(0xFF667EEA).withValues(alpha: 0.2),
                         )
                       : null,
                 ),
@@ -962,9 +1041,9 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF667EEA).withValues(
-                              alpha: 0.1,
-                            ),
+                            color: const Color(
+                              0xFF667EEA,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Text(
@@ -1213,14 +1292,14 @@ class _StepDetailsWithAIState extends State<_StepDetailsWithAI> {
   //  HELPERS
   // ═══════════════════════════════════════════════════════
   Widget _sectionLabel(String text) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textSecondary,
-          letterSpacing: 0.5,
-        ),
-      );
+    text,
+    style: TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textSecondary,
+      letterSpacing: 0.5,
+    ),
+  );
 
   Widget _fancyField(
     TextEditingController ctrl,
@@ -1312,7 +1391,8 @@ class _AISubtaskCard extends StatelessWidget {
       'low': (AppColors.priorityLowBg, AppColors.priorityLowText),
     };
     final prio = subtask.priority.toLowerCase();
-    final (bg, text) = priorityColors[prio] ??
+    final (bg, text) =
+        priorityColors[prio] ??
         (AppColors.priorityLowBg, AppColors.priorityLowText);
 
     return Container(
@@ -1391,10 +1471,7 @@ class _AISubtaskCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: bg,
                   borderRadius: BorderRadius.circular(10),

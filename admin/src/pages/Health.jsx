@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { getHealth } from '../services/api';
-import { Activity, Database, Server, Key, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Activity, Database, Server, Key, AlertTriangle, RefreshCw, BrainCircuit } from 'lucide-react';
 
 export default function Health() {
     const [health, setHealth] = useState(null);
@@ -75,7 +75,7 @@ export default function Health() {
                     <h3 className="font-bold mb-4 mt-8 flex items-center gap-2">
                         <Activity size={18} color="var(--primary)" /> External Service Status
                     </h3>
-                    <div className="grid-3">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="health-service">
                             <div className="flex items-center gap-3">
                                 <Database size={18} color={health.services.firestore.status === 'ok' ? 'var(--success)' : 'var(--danger)'} />
@@ -101,6 +101,40 @@ export default function Health() {
                                 <span className="health-name">Node.js Engine</span>
                             </div>
                             <div className="text-xs text-muted">{health.system.nodeVersion}</div>
+                        </motion.div>
+
+                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="health-service">
+                            <div className="flex items-center gap-3">
+                                <BrainCircuit size={18} color={
+                                    health.services.ai?.status === 'ok' ? 'var(--success)'
+                                    : health.services.ai?.status === 'disabled' ? 'var(--warning)'
+                                    : 'var(--danger)'
+                                } />
+                                <div>
+                                    <span className="health-name">AI Service</span>
+                                    {health.services.ai?.model && (
+                                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
+                                            {health.services.ai.model}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {health.services.ai?.status === 'ok' && (
+                                    <span className="health-latency">{health.services.ai.latencyMs} ms</span>
+                                )}
+                                {health.services.ai?.status === 'disabled' && (
+                                    <span style={{ fontSize: 11, color: 'var(--warning)', fontWeight: 600 }}>OFF</span>
+                                )}
+                                {health.services.ai?.status === 'no_key' && (
+                                    <span style={{ fontSize: 11, color: 'var(--danger)', fontWeight: 600 }}>No Key</span>
+                                )}
+                                <div className={`status-dot ${
+                                    health.services.ai?.status === 'ok' ? 'dot-green'
+                                    : health.services.ai?.status === 'disabled' ? 'dot-yellow'
+                                    : 'dot-red'
+                                }`} />
+                            </div>
                         </motion.div>
                     </div>
                 </>

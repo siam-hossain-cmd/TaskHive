@@ -16,8 +16,10 @@ class TaskRepository {
         .where('groupId', isNull: true)
         .orderBy('dueDate')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList(),
+        );
   }
 
   // Get tasks by status
@@ -28,8 +30,10 @@ class TaskRepository {
         .where('groupId', isNull: true)
         .orderBy('dueDate')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList(),
+        );
   }
 
   // Get tasks for a specific date
@@ -41,8 +45,10 @@ class TaskRepository {
         .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('dueDate', isLessThan: Timestamp.fromDate(end))
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => TaskModel.fromFirestore(doc)).toList(),
+        );
   }
 
   // Create task
@@ -84,8 +90,13 @@ class TaskRepository {
   }
 
   // Upload file attachment
-  Future<String> uploadAttachment(String userId, String taskId, File file) async {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+  Future<String> uploadAttachment(
+    String userId,
+    String taskId,
+    File file,
+  ) async {
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
     final ref = _storage.ref('tasks/$userId/$taskId/$fileName');
     await ref.putFile(file);
     final url = await ref.getDownloadURL();
@@ -105,8 +116,10 @@ class TaskRepository {
         .where('status', isEqualTo: TaskStatus.completed.name);
 
     if (since != null) {
-      query = query.where('completedAt',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(since));
+      query = query.where(
+        'completedAt',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(since),
+      );
     }
 
     final snapshot = await query.get();
@@ -117,7 +130,10 @@ class TaskRepository {
   Future<int> getOverdueTaskCount(String userId) async {
     final snapshot = await _tasksRef
         .where('userId', isEqualTo: userId)
-        .where('status', whereIn: [TaskStatus.pending.name, TaskStatus.inProgress.name])
+        .where(
+          'status',
+          whereIn: [TaskStatus.pending.name, TaskStatus.inProgress.name],
+        )
         .where('dueDate', isLessThan: Timestamp.now())
         .get();
     return snapshot.docs.length;

@@ -30,7 +30,7 @@ export default function Layout({ children, admin, onLogout }) {
             {/* Sidebar */}
             <nav className="sidebar">
                 <div className="brand">
-                    <div className="brand-icon">🐝</div>
+                    <div className="brand-icon"><img src="/logo.png" alt="TaskHive" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
                     <div>
                         <span className="brand-name">TaskHive</span>
                         <span className="brand-badge">ADMIN</span>

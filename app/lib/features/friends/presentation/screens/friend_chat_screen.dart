@@ -8,6 +8,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/friend_model.dart';
@@ -19,11 +22,7 @@ class FriendChatScreen extends ConsumerStatefulWidget {
   final String friendUid;
   final FriendModel? friend;
 
-  const FriendChatScreen({
-    super.key,
-    required this.friendUid,
-    this.friend,
-  });
+  const FriendChatScreen({super.key, required this.friendUid, this.friend});
 
   @override
   ConsumerState<FriendChatScreen> createState() => _FriendChatScreenState();
@@ -36,7 +35,9 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
   bool _isUploadingImage = false;
 
   String get _chatId => FriendMessageModel.buildChatId(
-      FirebaseAuth.instance.currentUser?.uid ?? '', widget.friendUid);
+    FirebaseAuth.instance.currentUser?.uid ?? '',
+    widget.friendUid,
+  );
 
   @override
   void initState() {
@@ -112,51 +113,78 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: AppColors.textSecondary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              Text('Send Attachment', style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
-              )),
+              Text(
+                'Send Attachment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 8),
               ListTile(
                 leading: Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.primary,
+                  ),
                 ),
-                title: const Text('Camera', style: TextStyle(fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'Camera',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 onTap: () => Navigator.pop(ctx, 'camera'),
               ),
               ListTile(
                 leading: Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.accent.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: AppColors.accent),
+                  child: const Icon(
+                    Icons.photo_library_rounded,
+                    color: AppColors.accent,
+                  ),
                 ),
-                title: const Text('Gallery', style: TextStyle(fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'Gallery',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 onTap: () => Navigator.pop(ctx, 'gallery'),
               ),
               ListTile(
                 leading: Container(
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF05252).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.insert_drive_file_rounded, color: Color(0xFFF05252)),
+                  child: const Icon(
+                    Icons.insert_drive_file_rounded,
+                    color: Color(0xFFF05252),
+                  ),
                 ),
-                title: const Text('File (PDF, DOC, etc.)', style: TextStyle(fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'File (PDF, DOC, etc.)',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 onTap: () => Navigator.pop(ctx, 'file'),
               ),
             ],
@@ -210,7 +238,10 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send image: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text('Failed to send image: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -258,7 +289,10 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send file: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+            content: Text('Failed to send file: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -266,19 +300,28 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
     }
   }
 
-
-  void _triggerLocalNotification({required String title, required String body}) {
+  void _triggerLocalNotification({
+    required String title,
+    required String body,
+  }) {
     const androidDetails = AndroidNotificationDetails(
-      'friend_chat', 'Friend Messages',
-      importance: Importance.high, priority: Priority.high,
+      'friend_chat',
+      'Friend Messages',
+      importance: Importance.high,
+      priority: Priority.high,
       showWhen: true,
     );
     const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     FlutterLocalNotificationsPlugin().show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
-      title, body, details,
+      title,
+      body,
+      details,
     );
   }
 
@@ -298,15 +341,17 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
           child: Column(
             children: [
               _buildHeader(friend),
-              if (_showTasks) _SharedTasksPanel(
-                myUid: me?.uid ?? '',
-                friendUid: widget.friendUid,
-              ),
+              if (_showTasks)
+                _SharedTasksPanel(
+                  myUid: me?.uid ?? '',
+                  friendUid: widget.friendUid,
+                ),
               Expanded(
                 child: messagesAsync.when(
                   data: (msgs) {
-                    WidgetsBinding.instance
-                        .addPostFrameCallback((_) => _scrollToBottom());
+                    WidgetsBinding.instance.addPostFrameCallback(
+                      (_) => _scrollToBottom(),
+                    );
                     if (msgs.isEmpty) return _buildEmptyChat();
                     return ListView.builder(
                       controller: _scrollCtrl,
@@ -315,7 +360,8 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
                       itemBuilder: (context, i) {
                         final msg = msgs[i];
                         final isMe = msg.senderId == me?.uid;
-                        final showDate = i == 0 ||
+                        final showDate =
+                            i == 0 ||
                             !_isSameDay(msgs[i - 1].timestamp, msg.timestamp);
                         return Column(
                           children: [
@@ -327,7 +373,8 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
                     );
                   },
                   loading: () => const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary)),
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  ),
                   error: (e, _) => Center(child: Text('Error: $e')),
                 ),
               ),
@@ -349,28 +396,43 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
         color: AppColors.surfaceColor,
         boxShadow: AppTheme.softShadows,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
       ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
             child: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: AppColors.bgColor, borderRadius: BorderRadius.circular(14)),
-              child: Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18, color: AppColors.textPrimary),
+                color: AppColors.bgColor,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           const SizedBox(width: 12),
           if (friend != null)
-            _ChatAvatar(name: friend.friendName, photoUrl: friend.friendPhotoUrl, size: 42)
+            _ChatAvatar(
+              name: friend.friendName,
+              photoUrl: friend.friendPhotoUrl,
+              size: 42,
+            )
           else
             Container(
-              width: 42, height: 42,
+              width: 42,
+              height: 42,
               decoration: const BoxDecoration(
-                  gradient: AppColors.gradientPurpleBlue, shape: BoxShape.circle),
+                gradient: AppColors.gradientPurpleBlue,
+                shape: BoxShape.circle,
+              ),
               child: Icon(Icons.person, color: AppColors.primary, size: 22),
             ),
           SizedBox(width: 12),
@@ -378,20 +440,35 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(friend?.friendName ?? widget.friendUid.substring(0, 8),
-                    style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary)),
-                Row(children: [
-                  Container(
-                    width: 8, height: 8,
-                    decoration: BoxDecoration(
-                        color: AppColors.priorityLowText, shape: BoxShape.circle)),
-                  SizedBox(width: 5),
-                  Text('Active now', style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600)),
-                ]),
+                Text(
+                  friend?.friendName ?? widget.friendUid.substring(0, 8),
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: AppColors.priorityLowText,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    SizedBox(width: 5),
+                    Text(
+                      'Active now',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -399,14 +476,19 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
           GestureDetector(
             onTap: () => setState(() => _showTasks = !_showTasks),
             child: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: _showTasks ? AppColors.primary.withValues(alpha: 0.12) : AppColors.bgColor,
+                color: _showTasks
+                    ? AppColors.primary.withValues(alpha: 0.12)
+                    : AppColors.bgColor,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(Icons.task_alt_rounded,
-                  size: 20,
-                  color: _showTasks ? AppColors.primary : AppColors.textSecondary),
+              child: Icon(
+                Icons.task_alt_rounded,
+                size: 20,
+                color: _showTasks ? AppColors.primary : AppColors.textSecondary,
+              ),
             ),
           ),
         ],
@@ -428,7 +510,8 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
           GestureDetector(
             onTap: _isUploadingImage ? null : _showAttachmentMenu,
             child: Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               margin: const EdgeInsets.only(right: 8, bottom: 4),
               decoration: BoxDecoration(
                 color: _isUploadingImage
@@ -439,10 +522,16 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
               child: _isUploadingImage
                   ? const Padding(
                       padding: EdgeInsets.all(10),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     )
-                  : const Icon(Icons.add_photo_alternate_rounded,
-                      size: 22, color: AppColors.primary),
+                  : const Icon(
+                      Icons.add_photo_alternate_rounded,
+                      size: 22,
+                      color: AppColors.primary,
+                    ),
             ),
           ),
           // Text input
@@ -479,7 +568,10 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
@@ -488,21 +580,28 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
           GestureDetector(
             onTap: _sendMessage,
             child: Container(
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppColors.primary, AppColors.secondary],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.35),
-                    blurRadius: 12, offset: const Offset(0, 4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -516,25 +615,47 @@ class _FriendChatScreenState extends ConsumerState<FriendChatScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 80, height: 80,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-                gradient: AppColors.gradientPurpleBlue, shape: BoxShape.circle),
-            child: Icon(Icons.chat_bubble_outline_rounded,
-                size: 38, color: AppColors.primary),
+              gradient: AppColors.gradientPurpleBlue,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 38,
+              color: AppColors.primary,
+            ),
           ),
           SizedBox(height: 20),
-          Text('Start a conversation!', style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
+          Text(
+            'Start a conversation!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+            ),
+          ),
           SizedBox(height: 8),
-          Text('Say hello to your friend 👋', style: TextStyle(
-              fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+          Text(
+            'Say hello to your friend 👋',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
   }
 
   List<BoxShadow> _invertedShadows() => [
-    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 24, offset: const Offset(0, -8)),
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.04),
+      blurRadius: 24,
+      offset: const Offset(0, -8),
+    ),
   ];
 }
 
@@ -552,7 +673,9 @@ class _MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
@@ -561,42 +684,60 @@ class _MessageBubble extends StatelessWidget {
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
-                if (isImage) _ImageBubble(imageUrl: msg.imageUrl!, isMe: isMe)
-                else if (isFile) _FileBubble(msg: msg, isMe: isMe)
-                else Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.72,
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: isMe
-                        ? const LinearGradient(
-                            colors: [AppColors.primary, Color(0xFF7C7DFF)],
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                          )
-                        : null,
-                    color: isMe ? null : AppColors.surfaceColor,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
-                      bottomLeft: Radius.circular(isMe ? 20 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 20),
+                if (isImage)
+                  _ImageBubble(imageUrl: msg.imageUrl!, isMe: isMe)
+                else if (isFile)
+                  _FileBubble(msg: msg, isMe: isMe)
+                else
+                  Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.72,
                     ),
-                    boxShadow: isMe ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.22),
-                        blurRadius: 12, offset: const Offset(0, 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: isMe
+                          ? const LinearGradient(
+                              colors: [AppColors.primary, Color(0xFF7C7DFF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isMe ? null : AppColors.surfaceColor,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(20),
+                        topRight: const Radius.circular(20),
+                        bottomLeft: Radius.circular(isMe ? 20 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 20),
                       ),
-                    ] : AppTheme.softShadows,
+                      boxShadow: isMe
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.22,
+                                ),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : AppTheme.softShadows,
+                    ),
+                    child: Text(
+                      msg.text,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isMe ? Colors.white : AppColors.textPrimary,
+                        height: 1.4,
+                      ),
+                    ),
                   ),
-                  child: Text(msg.text, style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600,
-                    color: isMe ? Colors.white : AppColors.textPrimary,
-                    height: 1.4,
-                  )),
-                ),
                 SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -604,12 +745,18 @@ class _MessageBubble extends StatelessWidget {
                     Text(
                       DateFormat('hh:mm a').format(msg.timestamp),
                       style: TextStyle(
-                        fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600,
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     if (isMe) ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.done_all_rounded, size: 12, color: AppColors.primary),
+                      const Icon(
+                        Icons.done_all_rounded,
+                        size: 12,
+                        color: AppColors.primary,
+                      ),
                     ],
                   ],
                 ),
@@ -628,79 +775,235 @@ class _ImageBubble extends StatelessWidget {
   final bool isMe;
   const _ImageBubble({required this.imageUrl, required this.isMe});
 
+  void _openFullScreen(BuildContext context) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        barrierDismissible: true,
+        pageBuilder: (ctx, anim, anim2) {
+          return FadeTransition(
+            opacity: anim,
+            child: Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Stack(
+                fit: StackFit.expand,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 4.0,
+                      child: Center(
+                        child: Hero(
+                          tag: 'chat_img_$imageUrl',
+                          child: Image.network(imageUrl, fit: BoxFit.contain),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Top bar
+                  Positioned(
+                    top: MediaQuery.of(ctx).padding.top + 8,
+                    left: 16,
+                    right: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _CircleButton(
+                          icon: Icons.arrow_back_rounded,
+                          onTap: () => Navigator.pop(ctx),
+                        ),
+                        Row(
+                          children: [
+                            _CircleButton(
+                              icon: Icons.open_in_new_rounded,
+                              onTap: () async {
+                                final uri = Uri.parse(imageUrl);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bubbleRadius = BorderRadius.only(
+      topLeft: const Radius.circular(18),
+      topRight: const Radius.circular(18),
+      bottomLeft: Radius.circular(isMe ? 18 : 4),
+      bottomRight: Radius.circular(isMe ? 4 : 18),
+    );
+
     return GestureDetector(
-      onTap: () => showDialog(
-        context: context,
-        builder: (ctx) => Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(imageUrl, fit: BoxFit.contain),
-              ),
-              Positioned(
-                top: 8, right: 8,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: Container(
-                    width: 36, height: 36,
+      onTap: () => _openFullScreen(context),
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.68,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: bubbleRadius,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Image
+            Hero(
+              tag: 'chat_img_$imageUrl',
+              child: ClipRRect(
+                borderRadius: bubbleRadius,
+                child: Image.network(
+                  imageUrl,
+                  width: 260,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (ctx, child, progress) {
+                    if (progress == null) return child;
+                    final pct = progress.expectedTotalBytes != null
+                        ? progress.cumulativeBytesLoaded /
+                              progress.expectedTotalBytes!
+                        : null;
+                    return Container(
+                      width: 260,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: AppColors.isDark
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200,
+                        borderRadius: bubbleRadius,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 36,
+                            height: 36,
+                            child: CircularProgressIndicator(
+                              value: pct,
+                              color: AppColors.primary,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                          if (pct != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              '${(pct * 100).toInt()}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 260,
+                    height: 120,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+                      color: AppColors.isDark
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade200,
+                      borderRadius: bubbleRadius,
                     ),
-                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image_rounded,
+                          color: AppColors.textSecondary,
+                          size: 32,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Failed to load',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(20),
-          topRight: const Radius.circular(20),
-          bottomLeft: Radius.circular(isMe ? 20 : 4),
-          bottomRight: Radius.circular(isMe ? 4 : 20),
-        ),
-        child: Image.network(
-          imageUrl,
-          width: 220,
-          height: 200,
-          fit: BoxFit.cover,
-          loadingBuilder: (ctx, child, progress) {
-            if (progress == null) return child;
-            return Container(
-              width: 220, height: 200,
-              color: AppColors.bgColor,
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: progress.expectedTotalBytes != null
-                      ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                      : null,
-                  color: AppColors.primary,
-                  strokeWidth: 2,
+            ),
+            // Bottom gradient overlay with time
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(isMe ? 18 : 4),
+                    bottomRight: Radius.circular(isMe ? 4 : 18),
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.5),
+                    ],
+                  ),
                 ),
               ),
-            );
-          },
-          errorBuilder: (_, __, ___) => Container(
-            width: 220, height: 100,
-            color: AppColors.bgColor,
-            child: Center(
-              child: Icon(Icons.broken_image_rounded, color: AppColors.textSecondary, size: 36),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
+/// Small circular button used in fullscreen image viewer
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _CircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
+}
 
 class _FileBubble extends StatelessWidget {
   final FriendMessageModel msg;
@@ -715,110 +1018,334 @@ class _FileBubble extends StatelessWidget {
 
   String get _sizeLabel {
     final bytes = msg.fileSize ?? 0;
-    if (bytes < 1024) return '${bytes}B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  IconData get _fileIcon {
+    switch (_ext) {
+      case 'PDF':
+        return Icons.picture_as_pdf_rounded;
+      case 'DOC':
+      case 'DOCX':
+        return Icons.description_rounded;
+      case 'XLS':
+      case 'XLSX':
+        return Icons.table_chart_rounded;
+      case 'PPT':
+      case 'PPTX':
+        return Icons.slideshow_rounded;
+      case 'ZIP':
+      case 'RAR':
+      case '7Z':
+        return Icons.folder_zip_rounded;
+      case 'MP3':
+      case 'WAV':
+      case 'AAC':
+      case 'M4A':
+        return Icons.audiotrack_rounded;
+      case 'MP4':
+      case 'MOV':
+      case 'AVI':
+      case 'MKV':
+        return Icons.videocam_rounded;
+      case 'TXT':
+        return Icons.article_rounded;
+      case 'CSV':
+        return Icons.table_rows_rounded;
+      default:
+        return Icons.insert_drive_file_rounded;
+    }
   }
 
   Color get _extColor {
     switch (_ext) {
-      case 'PDF': return const Color(0xFFF05252);
-      case 'DOC': case 'DOCX': return const Color(0xFF3B82F6);
-      case 'XLS': case 'XLSX': return const Color(0xFF10B981);
-      case 'PPT': case 'PPTX': return const Color(0xFFF59E0B);
-      case 'ZIP': case 'RAR': return const Color(0xFF8A94A6);
-      default: return AppColors.primary;
+      case 'PDF':
+        return const Color(0xFFE53935);
+      case 'DOC':
+      case 'DOCX':
+        return const Color(0xFF2196F3);
+      case 'XLS':
+      case 'XLSX':
+        return const Color(0xFF4CAF50);
+      case 'PPT':
+      case 'PPTX':
+        return const Color(0xFFFF9800);
+      case 'ZIP':
+      case 'RAR':
+      case '7Z':
+        return const Color(0xFF795548);
+      case 'MP3':
+      case 'WAV':
+      case 'AAC':
+      case 'M4A':
+        return const Color(0xFF9C27B0);
+      case 'MP4':
+      case 'MOV':
+      case 'AVI':
+      case 'MKV':
+        return const Color(0xFFE91E63);
+      case 'TXT':
+      case 'CSV':
+        return const Color(0xFF607D8B);
+      default:
+        return AppColors.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        if (msg.fileUrl != null) {
-          final uri = Uri.parse(msg.fileUrl!);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
+    final bubbleRadius = BorderRadius.only(
+      topLeft: const Radius.circular(18),
+      topRight: const Radius.circular(18),
+      bottomLeft: Radius.circular(isMe ? 18 : 4),
+      bottomRight: Radius.circular(isMe ? 4 : 18),
+    );
+
+    return _FileBubbleTappable(
+      msg: msg,
+      isMe: isMe,
+      ext: _ext,
+      sizeLabel: _sizeLabel,
+      fileIcon: _fileIcon,
+      extColor: _extColor,
+      bubbleRadius: bubbleRadius,
+    );
+  }
+}
+
+class _FileBubbleTappable extends StatefulWidget {
+  final FriendMessageModel msg;
+  final bool isMe;
+  final String ext;
+  final String sizeLabel;
+  final IconData fileIcon;
+  final Color extColor;
+  final BorderRadius bubbleRadius;
+
+  const _FileBubbleTappable({
+    required this.msg,
+    required this.isMe,
+    required this.ext,
+    required this.sizeLabel,
+    required this.fileIcon,
+    required this.extColor,
+    required this.bubbleRadius,
+  });
+
+  @override
+  State<_FileBubbleTappable> createState() => _FileBubbleTappableState();
+}
+
+class _FileBubbleTappableState extends State<_FileBubbleTappable> {
+  bool _isDownloading = false;
+  double _progress = 0;
+
+  Future<void> _openFile() async {
+    final url = widget.msg.fileUrl;
+    if (url == null) return;
+
+    setState(() {
+      _isDownloading = true;
+      _progress = 0;
+    });
+
+    try {
+      // Get temp directory
+      final dir = await getTemporaryDirectory();
+      final fileName =
+          widget.msg.fileName ??
+          'file_${DateTime.now().millisecondsSinceEpoch}';
+      final filePath = '${dir.path}/$fileName';
+
+      // Check if already downloaded
+      final file = File(filePath);
+      if (await file.exists()) {
+        setState(() => _isDownloading = false);
+        await OpenFilex.open(filePath);
+        return;
+      }
+
+      // Download the file
+      final request = http.Request('GET', Uri.parse(url));
+      final response = await http.Client().send(request);
+      final totalBytes = response.contentLength ?? 0;
+      int receivedBytes = 0;
+
+      final sink = file.openWrite();
+
+      await for (final chunk in response.stream) {
+        sink.add(chunk);
+        receivedBytes += chunk.length;
+        if (totalBytes > 0 && mounted) {
+          setState(() => _progress = receivedBytes / totalBytes);
         }
-      },
-      child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: isMe
-              ? const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFF7C7DFF)],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
-                )
-              : null,
-          color: isMe ? null : AppColors.surfaceColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(20),
-            topRight: const Radius.circular(20),
-            bottomLeft: Radius.circular(isMe ? 20 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 20),
+      }
+
+      await sink.close();
+
+      if (mounted) setState(() => _isDownloading = false);
+
+      // Open the downloaded file
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open file: $e'),
+            backgroundColor: AppColors.error,
           ),
-          boxShadow: isMe ? [
-            BoxShadow(color: AppColors.primary.withValues(alpha: 0.22), blurRadius: 12, offset: const Offset(0, 4)),
-          ] : AppTheme.softShadows,
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMe = widget.isMe;
+    final ext = widget.ext;
+    final extColor = widget.extColor;
+
+    return GestureDetector(
+      onTap: _isDownloading ? null : _openFile,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.72,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: isMe
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : _extColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(_ext.length > 4 ? _ext.substring(0, 4) : _ext,
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    color: isMe ? Colors.white : _extColor,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    msg.fileName ?? 'File',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isMe ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    _sizeLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isMe ? Colors.white.withValues(alpha: 0.75) : AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Icon(
-              Icons.open_in_new_rounded,
-              size: 18,
-              color: isMe ? Colors.white.withValues(alpha: 0.85) : AppColors.primary,
+        decoration: BoxDecoration(
+          color: isMe ? AppColors.primary : AppColors.surfaceColor,
+          borderRadius: widget.bubbleRadius,
+          boxShadow: [
+            BoxShadow(
+              color: isMe
+                  ? AppColors.primary.withValues(alpha: 0.18)
+                  : Colors.black.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            color: isMe
+                ? Colors.white.withValues(alpha: 0.10)
+                : extColor.withValues(alpha: 0.06),
+            borderRadius: widget.bubbleRadius,
+          ),
+          child: Row(
+            children: [
+              // File type icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isMe
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : extColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  widget.fileIcon,
+                  size: 26,
+                  color: isMe ? Colors.white : extColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // File info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.msg.fileName ?? 'File',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isMe ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isMe
+                                ? Colors.white.withValues(alpha: 0.15)
+                                : extColor.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            ext,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              color: isMe
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : extColor,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.sizeLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isMe
+                                ? Colors.white.withValues(alpha: 0.70)
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Action icon — open for sent, download for received
+              _isDownloading
+                  ? SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: CircularProgressIndicator(
+                          value: _progress > 0 ? _progress : null,
+                          strokeWidth: 2.5,
+                          color: isMe ? Colors.white : extColor,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isMe
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : extColor.withValues(alpha: 0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isMe
+                            ? Icons.open_in_new_rounded
+                            : Icons.download_rounded,
+                        size: 18,
+                        color: isMe ? Colors.white : extColor,
+                      ),
+                    ),
+            ],
+          ),
         ),
       ),
     );
@@ -832,7 +1359,8 @@ class _DateDivider extends StatelessWidget {
 
   String get _label {
     final now = DateTime.now();
-    if (date.day == now.day && date.month == now.month && date.year == now.year) return 'Today';
+    if (date.day == now.day && date.month == now.month && date.year == now.year)
+      return 'Today';
     final diff = now.difference(date).inDays;
     if (diff == 1) return 'Yesterday';
     return DateFormat('MMM d, yyyy').format(date);
@@ -854,9 +1382,14 @@ class _DateDivider extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: AppTheme.softShadows,
               ),
-              child: Text(_label, style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textSecondary,
-              )),
+              child: Text(
+                _label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ),
           ),
           Expanded(child: Divider(color: AppColors.bgColor, thickness: 1.5)),
@@ -879,8 +1412,9 @@ class _SharedTasksPanel extends ConsumerWidget {
       data: (allTasks) {
         // Show tasks where assignedTo == friendUid OR tasks by myUid assigned to friend
         // For simplicity: show MY pending/inProgress tasks (shared context)
-        final undone = allTasks.where((t) =>
-            t.status != TaskStatus.completed).toList();
+        final undone = allTasks
+            .where((t) => t.status != TaskStatus.completed)
+            .toList();
 
         return Container(
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -896,20 +1430,38 @@ class _SharedTasksPanel extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
                 child: Row(
                   children: [
-                    Icon(Icons.task_alt_rounded, size: 18, color: AppColors.primary),
+                    Icon(
+                      Icons.task_alt_rounded,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
                     SizedBox(width: 8),
-                    Text('Undone Tasks', style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textPrimary,
-                    )),
+                    Text(
+                      'Undone Tasks',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.priorityHighBg, borderRadius: BorderRadius.circular(10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
                       ),
-                      child: Text('${undone.length}', style: const TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.priorityHighText,
-                      )),
+                      decoration: BoxDecoration(
+                        color: AppColors.priorityHighBg,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${undone.length}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.priorityHighText,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -917,9 +1469,14 @@ class _SharedTasksPanel extends ConsumerWidget {
               if (undone.isEmpty)
                 Padding(
                   padding: EdgeInsets.fromLTRB(16, 0, 16, 14),
-                  child: Text('All caught up! 🎉', style: TextStyle(
-                    fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
-                  )),
+                  child: Text(
+                    'All caught up! 🎉',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 )
               else
                 SizedBox(
@@ -936,7 +1493,7 @@ class _SharedTasksPanel extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }
@@ -947,17 +1504,23 @@ class _TaskChip extends StatelessWidget {
 
   Color get _priorityColor {
     switch (task.priority) {
-      case TaskPriority.high: return AppColors.priorityHighText;
-      case TaskPriority.medium: return AppColors.priorityMediumText;
-      case TaskPriority.low: return AppColors.priorityLowText;
+      case TaskPriority.high:
+        return AppColors.priorityHighText;
+      case TaskPriority.medium:
+        return AppColors.priorityMediumText;
+      case TaskPriority.low:
+        return AppColors.priorityLowText;
     }
   }
 
   Color get _priorityBg {
     switch (task.priority) {
-      case TaskPriority.high: return AppColors.priorityHighBg;
-      case TaskPriority.medium: return AppColors.priorityMediumBg;
-      case TaskPriority.low: return AppColors.priorityLowBg;
+      case TaskPriority.high:
+        return AppColors.priorityHighBg;
+      case TaskPriority.medium:
+        return AppColors.priorityMediumBg;
+      case TaskPriority.low:
+        return AppColors.priorityLowBg;
     }
   }
 
@@ -967,24 +1530,37 @@ class _TaskChip extends StatelessWidget {
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: _priorityBg, borderRadius: BorderRadius.circular(16),
+        color: _priorityBg,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(task.title,
-            maxLines: 2, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: _priorityColor)),
+          Text(
+            task.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: _priorityColor,
+            ),
+          ),
           const SizedBox(height: 4),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.circle, size: 6, color: _priorityColor),
               const SizedBox(width: 4),
-              Text(task.priority.name.toUpperCase(), style: TextStyle(
-                fontSize: 9, fontWeight: FontWeight.w900, color: _priorityColor,
-              )),
+              Text(
+                task.priority.name.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  color: _priorityColor,
+                ),
+              ),
             ],
           ),
         ],
@@ -1010,15 +1586,28 @@ class _ChatAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photoUrl != null && photoUrl!.isNotEmpty) {
-      return CircleAvatar(radius: size / 2, backgroundImage: NetworkImage(photoUrl!));
+      return CircleAvatar(
+        radius: size / 2,
+        backgroundImage: NetworkImage(photoUrl!),
+      );
     }
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: const BoxDecoration(
-          gradient: AppColors.gradientPurpleBlue, shape: BoxShape.circle),
-      child: Center(child: Text(_initials, style: TextStyle(
-        fontSize: size * 0.35, fontWeight: FontWeight.w900, color: AppColors.primary,
-      ))),
+        gradient: AppColors.gradientPurpleBlue,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          _initials,
+          style: TextStyle(
+            fontSize: size * 0.35,
+            fontWeight: FontWeight.w900,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
     );
   }
 }

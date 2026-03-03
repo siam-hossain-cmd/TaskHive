@@ -17,11 +17,15 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeProvider);
     final isDark = themeMode == ThemeMode.dark;
     final notifAsync = ref.watch(notificationSettingsProvider);
-    final notifSettings = notifAsync.valueOrNull ?? const NotificationSettings();
+    final notifSettings =
+        notifAsync.valueOrNull ?? const NotificationSettings();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.settings, style: TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text(
+          AppStrings.settings,
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
         centerTitle: false,
         // Back button auto-shows when pushed (e.g. from Home), hidden when used as a tab
         leading: Navigator.canPop(context)
@@ -86,7 +90,8 @@ class SettingsScreen extends ConsumerWidget {
             label: 'Reminder Lead Time',
             subtitle: '${notifSettings.reminderHours} hours before deadline',
             trailing: const Icon(Icons.chevron_right_rounded, size: 22),
-            onTap: () => _showReminderPicker(context, ref, notifSettings.reminderHours),
+            onTap: () =>
+                _showReminderPicker(context, ref, notifSettings.reminderHours),
           ),
 
           const SizedBox(height: AppSizes.lg),
@@ -132,8 +137,11 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Enjoying TaskHive? Leave a review',
             trailing: const Icon(Icons.chevron_right_rounded, size: 22),
             onTap: () async {
-              final uri = Uri.parse('https://play.google.com/store/apps/details?id=com.taskhive.taskhive');
-              if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+              final uri = Uri.parse(
+                'https://play.google.com/store/apps/details?id=com.taskhive.taskhive',
+              );
+              if (await canLaunchUrl(uri))
+                launchUrl(uri, mode: LaunchMode.externalApplication);
             },
           ),
 
@@ -195,9 +203,12 @@ class SettingsScreen extends ConsumerWidget {
   // ── Profile Banner ─────────────────────────────────────────────────────────
   Widget _buildProfileBanner(BuildContext context, WidgetRef ref) {
     final user = ref.watch(userProfileProvider).valueOrNull;
-    final initial = user?.displayName.isNotEmpty == true ? user!.displayName[0].toUpperCase() : '?';
+    final initial = user?.displayName.isNotEmpty == true
+        ? user!.displayName[0].toUpperCase()
+        : '?';
     final name = user?.displayName ?? 'Your Profile';
     final email = user?.email ?? '';
+    final photoUrl = user?.photoUrl;
 
     return GestureDetector(
       onTap: () => context.push('/profile'),
@@ -206,65 +217,146 @@ class SettingsScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [AppColors.primary, AppColors.secondary],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.28), blurRadius: 14, offset: const Offset(0, 5))],
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.28),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: Row(children: [
-          Container(
-            width: 54, height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
-              shape: BoxShape.circle,
+        child: Row(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.25),
+                shape: BoxShape.circle,
+              ),
+              child: photoUrl != null && photoUrl.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        photoUrl,
+                        width: 54,
+                        height: 54,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Text(
+                            initial,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
             ),
-            child: Center(child: Text(initial, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white))),
-          ),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Colors.white)),
-            if (email.isNotEmpty)
-              Text(email, style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8), fontWeight: FontWeight.w500)),
-          ])),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (email.isNotEmpty)
+                    Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Text('Profile', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white)),
-              SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white),
-            ]),
-          ),
-        ]),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Profile',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   // ── Reminder Picker ─────────────────────────────────────────────────────────
   Future<void> _showReminderPicker(
-      BuildContext context, WidgetRef ref, int currentHours) async {
+    BuildContext context,
+    WidgetRef ref,
+    int currentHours,
+  ) async {
     final options = [1, 2, 4, 6, 12, 24, 48, 72];
     final picked = await showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reminder Lead Time',
-            style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Reminder Lead Time',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: options.map((h) {
             final label = h == 1
                 ? '1 hour'
                 : h < 24
-                    ? '$h hours'
-                    : '${h ~/ 24} day${h > 24 ? 's' : ''}';
+                ? '$h hours'
+                : '${h ~/ 24} day${h > 24 ? 's' : ''}';
             return ListTile(
-              title: Text(label, style: TextStyle(
-                fontWeight: h == currentHours ? FontWeight.w700 : FontWeight.w600,
-                color: h == currentHours ? AppColors.primary : null,
-              )),
+              title: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: h == currentHours
+                      ? FontWeight.w700
+                      : FontWeight.w600,
+                  color: h == currentHours ? AppColors.primary : null,
+                ),
+              ),
               trailing: h == currentHours
                   ? const Icon(Icons.check_rounded, color: AppColors.primary)
                   : null,
@@ -272,11 +364,18 @@ class SettingsScreen extends ConsumerWidget {
             );
           }).toList(),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
     if (picked != null) {
-      await ref.read(notificationSettingsProvider.notifier).setReminderHours(picked);
+      await ref
+          .read(notificationSettingsProvider.notifier)
+          .setReminderHours(picked);
     }
   }
 
@@ -285,7 +384,10 @@ class SettingsScreen extends ConsumerWidget {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Language', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Language',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -295,15 +397,28 @@ class SettingsScreen extends ConsumerWidget {
             _langOption(ctx, '🇪🇸 Spanish (coming soon)', false),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
 
   Widget _langOption(BuildContext ctx, String label, bool available) {
     return ListTile(
-      title: Text(label, style: TextStyle(fontWeight: FontWeight.w600, color: available ? null : Colors.grey)),
-      trailing: available ? const Icon(Icons.check_rounded, color: AppColors.primary) : null,
+      title: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: available ? null : Colors.grey,
+        ),
+      ),
+      trailing: available
+          ? const Icon(Icons.check_rounded, color: AppColors.primary)
+          : null,
       onTap: available ? () => Navigator.pop(ctx) : null,
     );
   }
@@ -313,12 +428,19 @@ class SettingsScreen extends ConsumerWidget {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Export Data', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Export Data',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: const Text(
-            'Your tasks will be exported and saved to your device Downloads folder. This feature will be available in v1.1.0.',
-            style: TextStyle(height: 1.5)),
+          'Your tasks will be exported and saved to your device Downloads folder. This feature will be available in v1.1.0.',
+          style: TextStyle(height: 1.5),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -329,12 +451,18 @@ class SettingsScreen extends ConsumerWidget {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Help & Support', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Help & Support',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Need help? Reach out to us:', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'Need help? Reach out to us:',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 12),
             _helpRow(Icons.email_outlined, 'support@taskhive.app', () async {
               final uri = Uri.parse('mailto:support@taskhive.app');
@@ -343,11 +471,17 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             _helpRow(Icons.language_rounded, 'taskhive.app/help', () async {
               final uri = Uri.parse('https://taskhive.app/help');
-              if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
+              if (await canLaunchUrl(uri))
+                launchUrl(uri, mode: LaunchMode.externalApplication);
             }),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -355,11 +489,20 @@ class SettingsScreen extends ConsumerWidget {
   Widget _helpRow(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Row(children: [
-        Icon(icon, size: 18, color: AppColors.primary),
-        const SizedBox(width: 10),
-        Text(label, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline)),
-      ]),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -370,7 +513,8 @@ class SettingsScreen extends ConsumerWidget {
       applicationName: 'TaskHive',
       applicationVersion: '1.0.0',
       applicationIcon: Container(
-        width: 56, height: 56,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           gradient: AppColors.primaryGradient,
           borderRadius: BorderRadius.circular(16),
@@ -434,7 +578,9 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              letterSpacing: 1.2, fontWeight: FontWeight.w700),
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -465,15 +611,20 @@ class _SettingsTile extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: Container(
-          width: 42, height: 42,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             color: (iconColor ?? AppColors.primary).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 22, color: iconColor ?? AppColors.primary),
         ),
-        title: Text(label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: iconColor)),
+        title: Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(color: iconColor),
+        ),
         subtitle: subtitle != null
             ? Text(subtitle!, style: Theme.of(context).textTheme.bodySmall)
             : null,

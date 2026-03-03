@@ -45,10 +45,12 @@ class AuthRepository {
   }) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
     var profile = await getUserProfile();
-    
+
     // If user exists in Auth but not Firestore, create profile
     if (profile == null && currentUser != null) {
-      print('DEBUG: Creating missing Firestore profile for ${currentUser!.uid}');
+      print(
+        'DEBUG: Creating missing Firestore profile for ${currentUser!.uid}',
+      );
       final user = UserModel(
         uid: currentUser!.uid,
         uniqueId: AppHelpers.generateUniqueId(),
@@ -58,7 +60,10 @@ class AuthRepository {
         createdAt: DateTime.now(),
         settings: UserSettings(),
       );
-      await _firestore.collection('users').doc(user.uid).set(user.toFirestore());
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(user.toFirestore());
       profile = user;
     }
     return profile;
@@ -102,14 +107,29 @@ class AuthRepository {
   // Get user profile
   Future<UserModel?> getUserProfile() async {
     if (currentUser == null) return null;
-    final doc = await _firestore.collection('users').doc(currentUser!.uid).get();
+    final doc = await _firestore
+        .collection('users')
+        .doc(currentUser!.uid)
+        .get();
     if (!doc.exists) return null;
     return UserModel.fromFirestore(doc);
   }
 
   // Update user profile
   Future<void> updateUserProfile(UserModel user) async {
-    await _firestore.collection('users').doc(user.uid).update(user.toFirestore());
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .update(user.toFirestore());
+  }
+
+  // Update profile photo URL
+  Future<void> updateProfilePhoto(String photoUrl) async {
+    if (currentUser == null) return;
+    await _firestore.collection('users').doc(currentUser!.uid).update({
+      'photoUrl': photoUrl,
+    });
+    await currentUser!.updatePhotoURL(photoUrl);
   }
 
   // Find user by unique ID

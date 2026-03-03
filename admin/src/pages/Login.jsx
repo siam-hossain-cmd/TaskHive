@@ -32,7 +32,7 @@ export default function Login({ onLogin }) {
                 className="login-card"
             >
                 <div className="login-logo">
-                    <div className="icon">🐝</div>
+                    <div className="icon"><img src="/logo.png" alt="TaskHive" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
                     <div>
                         <div className="name">TaskHive</div>
                         <div className="sub">ADMIN CONSOLE</div>

@@ -23,6 +23,18 @@ class TaskModel {
   final String? groupId;
   final int estimatedMinutes;
 
+  // Subtask tracking
+  final int subtaskCount;
+  final int subtaskCompleted;
+
+  // Time tracking
+  final int totalTimeSpent; // seconds
+  final bool isTimerRunning;
+
+  // Dependencies
+  final List<String> dependsOn; // task IDs this task depends on
+  final List<String> blockedBy; // task IDs blocking this task
+
   TaskModel({
     required this.id,
     required this.userId,
@@ -39,12 +51,30 @@ class TaskModel {
     required this.createdAt,
     this.groupId,
     this.estimatedMinutes = 60,
+    this.subtaskCount = 0,
+    this.subtaskCompleted = 0,
+    this.totalTimeSpent = 0,
+    this.isTimerRunning = false,
+    this.dependsOn = const [],
+    this.blockedBy = const [],
   });
 
   bool get isOverdue =>
       status != TaskStatus.completed && DateTime.now().isAfter(dueDate);
 
   bool get isPersonal => groupId == null;
+
+  bool get isBlocked => blockedBy.isNotEmpty;
+
+  double get subtaskProgress =>
+      subtaskCount > 0 ? subtaskCompleted / subtaskCount : 0.0;
+
+  String get formattedTimeSpent {
+    final hours = totalTimeSpent ~/ 3600;
+    final minutes = (totalTimeSpent % 3600) ~/ 60;
+    if (hours > 0) return '${hours}h ${minutes}m';
+    return '${minutes}m';
+  }
 
   factory TaskModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -73,6 +103,12 @@ class TaskModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       groupId: data['groupId'],
       estimatedMinutes: data['estimatedMinutes'] ?? 60,
+      subtaskCount: data['subtaskCount'] ?? 0,
+      subtaskCompleted: data['subtaskCompleted'] ?? 0,
+      totalTimeSpent: data['totalTimeSpent'] ?? 0,
+      isTimerRunning: data['isTimerRunning'] ?? false,
+      dependsOn: List<String>.from(data['dependsOn'] ?? []),
+      blockedBy: List<String>.from(data['blockedBy'] ?? []),
     );
   }
 
@@ -94,6 +130,12 @@ class TaskModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'groupId': groupId,
       'estimatedMinutes': estimatedMinutes,
+      'subtaskCount': subtaskCount,
+      'subtaskCompleted': subtaskCompleted,
+      'totalTimeSpent': totalTimeSpent,
+      'isTimerRunning': isTimerRunning,
+      'dependsOn': dependsOn,
+      'blockedBy': blockedBy,
     };
   }
 
@@ -113,6 +155,12 @@ class TaskModel {
     DateTime? createdAt,
     String? groupId,
     int? estimatedMinutes,
+    int? subtaskCount,
+    int? subtaskCompleted,
+    int? totalTimeSpent,
+    bool? isTimerRunning,
+    List<String>? dependsOn,
+    List<String>? blockedBy,
   }) {
     return TaskModel(
       id: id ?? this.id,
@@ -130,6 +178,12 @@ class TaskModel {
       createdAt: createdAt ?? this.createdAt,
       groupId: groupId ?? this.groupId,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      subtaskCount: subtaskCount ?? this.subtaskCount,
+      subtaskCompleted: subtaskCompleted ?? this.subtaskCompleted,
+      totalTimeSpent: totalTimeSpent ?? this.totalTimeSpent,
+      isTimerRunning: isTimerRunning ?? this.isTimerRunning,
+      dependsOn: dependsOn ?? this.dependsOn,
+      blockedBy: blockedBy ?? this.blockedBy,
     );
   }
 }

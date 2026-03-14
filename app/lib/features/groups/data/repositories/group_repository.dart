@@ -8,13 +8,15 @@ class GroupRepository {
 
   // Get user's groups
   Stream<List<GroupModel>> getUserGroups(String userId) {
-    return _groupsRef
-        .where('memberIds', arrayContains: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map(
-          (snap) => snap.docs.map((d) => GroupModel.fromFirestore(d)).toList(),
-        );
+    return _groupsRef.where('memberIds', arrayContains: userId).snapshots().map(
+      (snap) {
+        final groups = snap.docs
+            .map((d) => GroupModel.fromFirestore(d))
+            .toList();
+        groups.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        return groups;
+      },
+    );
   }
 
   // Create group
@@ -66,12 +68,14 @@ class GroupRepository {
     return _firestore
         .collection('group_tasks')
         .where('groupId', isEqualTo: groupId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => GroupTaskModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final tasks = snap.docs
+              .map((d) => GroupTaskModel.fromFirestore(d))
+              .toList();
+          tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return tasks;
+        });
   }
 
   Future<void> updateGroupTask(GroupTaskModel task) async {
@@ -130,13 +134,15 @@ class GroupRepository {
     return _firestore
         .collection('activity_log')
         .where('groupId', isEqualTo: groupId)
-        .orderBy('timestamp', descending: true)
         .limit(50)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => ActivityLogModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final logs = snap.docs
+              .map((d) => ActivityLogModel.fromFirestore(d))
+              .toList();
+          logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return logs;
+        });
   }
 
   // ── Chat ──
@@ -149,12 +155,14 @@ class GroupRepository {
     return _firestore
         .collection('messages')
         .where('groupId', isEqualTo: groupId)
-        .orderBy('timestamp', descending: true)
         .limit(100)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => MessageModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final msgs = snap.docs
+              .map((d) => MessageModel.fromFirestore(d))
+              .toList();
+          msgs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return msgs;
+        });
   }
 }

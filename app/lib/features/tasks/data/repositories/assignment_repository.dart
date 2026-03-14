@@ -12,12 +12,14 @@ class AssignmentRepository {
     return _firestore
         .collection('assignments')
         .where('groupId', isEqualTo: groupId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => AssignmentModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final list = snap.docs
+              .map((d) => AssignmentModel.fromFirestore(d))
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Stream<AssignmentModel?> getAssignment(String assignmentId) {
@@ -73,12 +75,14 @@ class AssignmentRepository {
     return _firestore
         .collection('group_tasks')
         .where('assignmentId', isEqualTo: assignmentId)
-        .orderBy('createdAt')
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => GroupTaskModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final tasks = snap.docs
+              .map((d) => GroupTaskModel.fromFirestore(d))
+              .toList();
+          tasks.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          return tasks;
+        });
   }
 
   // ── Task Comments ──
@@ -87,12 +91,14 @@ class AssignmentRepository {
     return _firestore
         .collection('task_comments')
         .where('taskId', isEqualTo: taskId)
-        .orderBy('createdAt')
         .snapshots()
-        .map(
-          (snap) =>
-              snap.docs.map((d) => TaskCommentModel.fromFirestore(d)).toList(),
-        );
+        .map((snap) {
+          final comments = snap.docs
+              .map((d) => TaskCommentModel.fromFirestore(d))
+              .toList();
+          comments.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          return comments;
+        });
   }
 
   Future<TaskCommentModel> addTaskComment(TaskCommentModel comment) async {

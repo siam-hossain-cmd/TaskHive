@@ -28,7 +28,7 @@ part 'create_task_team_steps.dart';
 part 'create_task_ai_step.dart';
 
 // ─── Wizard State ─────────────────────────────────────────────────────────────
-enum _TaskMode { individual, team }
+enum _TaskMode { individual, team, reminder }
 
 enum _TeamSource { newTeam, existingTeam }
 
@@ -135,6 +135,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   }
 
   void _next() {
+    // If reminder mode, navigate to create reminder screen
+    if (_step == 0 && _mode == _TaskMode.reminder) {
+      context.push('/create-reminder');
+      return;
+    }
     // Validate current step
     if (_step == 1 && _titleCtrl.text.trim().isEmpty) {
       _snack('Please enter a task title');
@@ -287,6 +292,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         teamMembers = members.isNotEmpty ? members : null;
       }
 
+      // Calculate team size for AI to create appropriate number of subtasks
+      final teamSize = teamMembers?.length ?? 1;
+
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.analyzeAssignment(
         pdfUrl: _pdfUploadUrl!,
@@ -297,6 +305,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             ? _subjectCtrl.text.trim()
             : null,
         teamMembers: teamMembers,
+        teamSize: teamSize,
       );
 
       if (result != null) {
@@ -365,6 +374,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         _dueTime.minute,
       );
 
+      // Track created group info so we can navigate to it after
+      String? createdGroupId;
+      String? createdGroupName;
+
       if ((_mode == _TaskMode.individual && _aiResult == null) || _isEditing) {
         // Simple personal task (no AI subtasks)
         final task = TaskModel(
@@ -405,15 +418,18 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         final repo = ref.read(groupRepositoryProvider);
         final apiService = ref.read(apiServiceProvider);
 
+        final groupName = _titleCtrl.text.trim();
         final group = GroupModel(
           id: '',
-          name: _titleCtrl.text.trim(),
+          name: groupName,
           leaderId: user.uid,
           memberIds: [user.uid],
           permissionMode: PermissionMode.leader,
           createdAt: DateTime.now(),
         );
         final groupId = await repo.createGroupReturnId(group);
+        createdGroupId = groupId;
+        createdGroupName = groupName;
 
         final subtasks = _aiResult!.subtasks
             .map(
@@ -458,10 +474,13 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
           );
           groupId = await repo.createGroupReturnId(group);
           leaderId = _leaderId ?? user.uid;
+          createdGroupName = _teamNameCtrl.text.trim();
         } else {
           groupId = _selectedGroup!.id;
           leaderId = _selectedGroup!.leaderId;
+          createdGroupName = _selectedGroup!.name;
         }
+        createdGroupId = groupId;
 
         // If AI analysis is available, create as an assignment with subtasks
         if (_aiResult != null && _aiResult!.subtasks.isNotEmpty) {
@@ -528,7 +547,17 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
         }
       }
 
-      if (mounted) context.pop();
+      if (mounted) {
+        if (createdGroupId != null) {
+          // Navigate to the group detail screen so the user can see the task
+          context.go(
+            '/group/$createdGroupId',
+            extra: {'groupName': createdGroupName ?? ''},
+          );
+        } else {
+          context.pop();
+        }
+      }
     } catch (e) {
       if (mounted) _snack('Error: $e');
       setState(() => _isLoading = false);

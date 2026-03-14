@@ -85,21 +85,25 @@ class ApiService {
     String? title,
     String? subject,
     List<Map<String, String>>? teamMembers,
+    int? teamSize,
   }) async {
     final headers = await _getHeaders();
     final url = Uri.parse('$_baseUrl/ai/analyze');
 
     try {
-      final res = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode({
-          'pdfUrl': pdfUrl,
-          if (title != null) 'title': title,
-          if (subject != null) 'subject': subject,
-          if (teamMembers != null) 'teamMembers': teamMembers,
-        }),
-      );
+      final res = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode({
+              'pdfUrl': pdfUrl,
+              if (title != null) 'title': title,
+              if (subject != null) 'subject': subject,
+              if (teamMembers != null) 'teamMembers': teamMembers,
+              if (teamSize != null) 'teamSize': teamSize,
+            }),
+          )
+          .timeout(const Duration(seconds: 120));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -109,7 +113,9 @@ class ApiService {
         );
       } else {
         final error = jsonDecode(res.body);
-        throw Exception(error['error'] ?? 'Failed to analyze assignment');
+        final details = error['details'] ?? '';
+        final msg = error['error'] ?? 'Failed to analyze assignment';
+        throw Exception('$msg${details.isNotEmpty ? ': $details' : ''}');
       }
     } catch (e) {
       print('AI Analysis Error: $e');
@@ -127,15 +133,19 @@ class ApiService {
     final url = Uri.parse('$_baseUrl/ai/refine');
 
     try {
-      final res = await http.post(
-        url,
-        headers: headers,
-        body: jsonEncode({
-          'conversationId': conversationId,
-          'message': message,
-          'currentSubtasks': currentSubtasks.map((s) => s.toJson()).toList(),
-        }),
-      );
+      final res = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode({
+              'conversationId': conversationId,
+              'message': message,
+              'currentSubtasks': currentSubtasks
+                  .map((s) => s.toJson())
+                  .toList(),
+            }),
+          )
+          .timeout(const Duration(seconds: 120));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -342,6 +352,125 @@ class ApiService {
     } catch (e) {
       print('Complete Assignment Error: $e');
       return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  AI ENHANCEMENT ENDPOINTS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Parse natural language text into a structured task
+  Future<Map<String, dynamic>?> parseTaskFromText(String text) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('$_baseUrl/ai/parse-task');
+
+    try {
+      final res = await http
+          .post(url, headers: headers, body: jsonEncode({'text': text}))
+          .timeout(const Duration(seconds: 60));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['task'] as Map<String, dynamic>?;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['error'] ?? 'Failed to parse task');
+      }
+    } catch (e) {
+      print('AI Parse Task Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AI-powered task suggestions
+  Future<Map<String, dynamic>?> getAISuggestions({
+    required List<Map<String, dynamic>> tasks,
+    List<Map<String, dynamic>>? completedTasks,
+  }) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('$_baseUrl/ai/suggestions');
+
+    try {
+      final res = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode({
+              'tasks': tasks,
+              'completedTasks': completedTasks ?? [],
+              'currentTime': DateTime.now().toIso8601String(),
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['error'] ?? 'Failed to get suggestions');
+      }
+    } catch (e) {
+      print('AI Suggestions Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AI weekly productivity review
+  Future<Map<String, dynamic>?> getWeeklyReview({
+    required Map<String, dynamic> weeklyStats,
+    required List<Map<String, dynamic>> tasks,
+    String? userName,
+  }) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('$_baseUrl/ai/weekly-review');
+
+    try {
+      final res = await http
+          .post(
+            url,
+            headers: headers,
+            body: jsonEncode({
+              'weeklyStats': weeklyStats,
+              'tasks': tasks,
+              'userName': userName,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['review'] as Map<String, dynamic>?;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['error'] ?? 'Failed to generate weekly review');
+      }
+    } catch (e) {
+      print('AI Weekly Review Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Get AI smart priority suggestions
+  Future<Map<String, dynamic>?> getSmartPrioritySuggestions({
+    required List<Map<String, dynamic>> tasks,
+  }) async {
+    final headers = await _getHeaders();
+    final url = Uri.parse('$_baseUrl/ai/smart-prioritize');
+
+    try {
+      final res = await http
+          .post(url, headers: headers, body: jsonEncode({'tasks': tasks}))
+          .timeout(const Duration(seconds: 60));
+
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['error'] ?? 'Failed to get priority suggestions');
+      }
+    } catch (e) {
+      print('AI Smart Prioritize Error: $e');
+      rethrow;
     }
   }
 }

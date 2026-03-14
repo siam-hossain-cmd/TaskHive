@@ -15,14 +15,17 @@ const auditRoutes = require('./routes/audit');
 const aiRoutes = require('./routes/ai');
 const aiAdminRoutes = require('./routes/ai-admin');
 const assignmentRoutes = require('./routes/assignments');
+const reminderRoutes = require('./routes/reminders');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ─── Security Middleware ──────────────────────────────────────────────────────
+// ─── Security Middleware ────────────────────────────────────────────────────────
 app.use(helmet());
+
+const productionOrigins = [process.env.ADMIN_PANEL_URL || 'https://admin.taskhive.com'];
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', '*'],
+    origin: process.env.NODE_ENV === 'production' ? productionOrigins : ['http://localhost:5173', 'http://localhost:3000', '*'],
     credentials: true,
 }));
 
@@ -52,6 +55,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/ai-admin', aiAdminRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/reminders', reminderRoutes);
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -71,7 +75,10 @@ app.use((req, res) => {
 // ─── Error Handler ────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
-    res.status(500).json({ error: 'Internal server error', message: err.message });
+    res.status(500).json({ 
+        error: 'Internal server error', 
+        message: process.env.NODE_ENV === 'production' ? 'An unexpected error occurred.' : err.message 
+    });
 });
 
 // ─── Start Server ─────────────────────────────────────────────────────────────

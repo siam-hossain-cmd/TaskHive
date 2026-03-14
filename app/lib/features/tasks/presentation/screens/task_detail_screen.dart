@@ -7,6 +7,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/task_model.dart';
 import '../providers/task_providers.dart';
+import '../widgets/subtask_checklist.dart';
+import '../widgets/time_tracking_widget.dart';
+import '../widgets/dependency_widget.dart';
 
 class TaskDetailScreen extends ConsumerStatefulWidget {
   final String taskId;
@@ -143,6 +146,24 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 _sectionLabel('DETAILS'),
                 const SizedBox(height: 8),
                 _buildDetailsGrid(task),
+                const SizedBox(height: 16),
+
+                // ── Subtasks ──
+                _sectionLabel('SUBTASKS'),
+                const SizedBox(height: 8),
+                SubtaskChecklist(taskId: widget.taskId),
+                const SizedBox(height: 16),
+
+                // ── Time Tracking ──
+                _sectionLabel('TIME TRACKING'),
+                const SizedBox(height: 8),
+                TimeTrackingWidget(taskId: widget.taskId),
+                const SizedBox(height: 16),
+
+                // ── Dependencies ──
+                _sectionLabel('DEPENDENCIES'),
+                const SizedBox(height: 8),
+                DependencyWidget(taskId: widget.taskId),
                 const SizedBox(height: 16),
 
                 // ── Attachments ──

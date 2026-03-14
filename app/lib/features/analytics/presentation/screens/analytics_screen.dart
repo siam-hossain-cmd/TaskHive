@@ -356,7 +356,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen>
           ),
           const SizedBox(height: 24),
           SizedBox(
-            height: 120,
+            height: 130,
             child: AnimatedBuilder(
               animation: _progressAnim,
               builder: (context, _) {

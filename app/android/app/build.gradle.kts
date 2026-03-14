@@ -34,7 +34,11 @@ android {
 
     buildTypes {
         release {
+            // TODO: In a real production deployment, you'll need an actual release keystore here instead of \"debug\"
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

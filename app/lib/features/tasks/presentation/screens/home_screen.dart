@@ -12,6 +12,7 @@ import '../../../auth/domain/models/user_model.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../smart_planner/presentation/providers/smart_planner_providers.dart';
 import '../../../smart_planner/domain/models/planner_models.dart';
+import '../../../../core/widgets/sync_status_banner.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -83,10 +84,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) {
     // Sort: active first by due date, completed at bottom
     tasks.sort((a, b) {
-      if (a.status == TaskStatus.completed && b.status != TaskStatus.completed) {
+      if (a.status == TaskStatus.completed &&
+          b.status != TaskStatus.completed) {
         return 1;
       }
-      if (a.status != TaskStatus.completed && b.status == TaskStatus.completed) {
+      if (a.status != TaskStatus.completed &&
+          b.status == TaskStatus.completed) {
         return -1;
       }
       return a.dueDate.compareTo(b.dueDate);
@@ -124,6 +127,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       children: [
         // ── Header
         _buildHeader(context, ref, user, firstName, todayStr),
+
+        // ── Sync Status Banner
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+          child: SyncStatusBanner(),
+        ),
 
         // ── Quick Stats Bar
         Padding(
@@ -939,6 +948,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         const Color(0xFFFF6B6B),
         '/analytics',
       ),
+      (
+        Icons.auto_awesome_rounded,
+        'AI',
+        const Color(0xFF9B59B6),
+        '/ai-features',
+      ),
     ];
 
     return Column(
@@ -958,7 +973,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             final (icon, label, color, route) = a;
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: route != '/analytics' ? 10 : 0),
+                padding: EdgeInsets.only(
+                  right: route != '/ai-features' ? 10 : 0,
+                ),
                 child: GestureDetector(
                   onTap: () => context.push(route),
                   child: Container(

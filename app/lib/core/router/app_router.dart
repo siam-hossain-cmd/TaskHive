@@ -26,6 +26,14 @@ import '../../features/notifications/presentation/screens/notification_screen.da
 import '../../features/tasks/presentation/screens/assignment_detail_screen.dart';
 import '../../features/tasks/presentation/screens/submission_detail_screen.dart';
 import '../../features/tasks/presentation/screens/task_detail_screen.dart';
+import '../../features/tasks/presentation/screens/ai_features_screen.dart';
+import '../../features/groups/presentation/screens/group_chat_screen.dart';
+import '../../features/groups/presentation/screens/shared_notes_screen.dart';
+import '../../features/groups/presentation/screens/polls_screen.dart';
+import '../../features/groups/presentation/screens/group_detail_screen.dart';
+import '../../features/reminders/presentation/screens/create_reminder_screen.dart';
+import '../../features/reminders/presentation/screens/reminder_list_screen.dart';
+import '../../features/reminders/domain/models/reminder_model.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
@@ -59,6 +67,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           fullscreenDialog: true,
           child: CreateGroupScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/create-reminder',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final existing = state.extra as ReminderModel?;
+          return MaterialPage(
+            fullscreenDialog: true,
+            child: CreateReminderScreen(existingReminder: existing),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/reminders',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (_, __) => const MaterialPage(child: ReminderListScreen()),
       ),
       GoRoute(
         path: '/settings',
@@ -152,6 +176,69 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               taskId: taskId,
               groupId: groupId,
             ),
+          );
+        },
+      ),
+
+      // AI Features
+      GoRoute(
+        path: '/ai-features',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (_, __) => const MaterialPage(child: AIFeaturesScreen()),
+      ),
+
+      // Group Detail
+      GoRoute(
+        path: '/group/:groupId',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final groupId = state.pathParameters['groupId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupName = extra['groupName'] as String? ?? 'Group';
+          return MaterialPage(
+            child: GroupDetailScreen(groupId: groupId, groupName: groupName),
+          );
+        },
+      ),
+
+      // Group Chat
+      GoRoute(
+        path: '/group/:groupId/chat',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final groupId = state.pathParameters['groupId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupName = extra['groupName'] as String? ?? 'Group';
+          return MaterialPage(
+            child: GroupChatScreen(groupId: groupId, groupName: groupName),
+          );
+        },
+      ),
+
+      // Shared Notes
+      GoRoute(
+        path: '/group/:groupId/notes',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final groupId = state.pathParameters['groupId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupName = extra['groupName'] as String? ?? 'Group';
+          return MaterialPage(
+            child: SharedNotesScreen(groupId: groupId, groupName: groupName),
+          );
+        },
+      ),
+
+      // Polls
+      GoRoute(
+        path: '/group/:groupId/polls',
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) {
+          final groupId = state.pathParameters['groupId'] ?? '';
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final groupName = extra['groupName'] as String? ?? 'Group';
+          return MaterialPage(
+            child: PollsScreen(groupId: groupId, groupName: groupName),
           );
         },
       ),

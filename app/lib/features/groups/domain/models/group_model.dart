@@ -143,9 +143,19 @@ class GroupTaskModel {
                 ? (data['approvedAt'] as Timestamp).toDate()
                 : DateTime.tryParse(data['approvedAt'].toString()))
           : null,
-      dueDate: (data['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      dueDate: data['dueDate'] != null
+          ? (data['dueDate'] is Timestamp
+                ? (data['dueDate'] as Timestamp).toDate()
+                : DateTime.tryParse(data['dueDate'].toString()) ??
+                      DateTime.now())
+          : DateTime.now(),
       priority: data['priority'] ?? 'medium',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] is Timestamp
+                ? (data['createdAt'] as Timestamp).toDate()
+                : DateTime.tryParse(data['createdAt'].toString()) ??
+                      DateTime.now())
+          : DateTime.now(),
     );
   }
 

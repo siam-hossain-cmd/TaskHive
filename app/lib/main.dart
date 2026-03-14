@@ -61,7 +61,7 @@ void main() async {
 
   runApp(
     const ProviderScope(
-      child: TaskHiveApp(),
+      child: RTaskApp(),
     ),
   );
 }

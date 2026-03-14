@@ -7,8 +7,8 @@ import 'core/theme/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/services/push_notification_service.dart';
 
-class TaskHiveApp extends ConsumerWidget {
-  const TaskHiveApp({super.key});
+class RTaskApp extends ConsumerWidget {
+  const RTaskApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,7 +42,7 @@ class TaskHiveApp extends ConsumerWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: overlayStyle,
       child: MaterialApp.router(
-        title: 'TaskHive',
+        title: 'R-Task',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,

@@ -30,9 +30,9 @@ export default function Layout({ children, admin, onLogout }) {
             {/* Sidebar */}
             <nav className="sidebar">
                 <div className="brand">
-                    <div className="brand-icon"><img src="/logo.png" alt="TaskHive" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
+                    <div className="brand-icon"><img src="/logo.png" alt="R-Task" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /></div>
                     <div>
-                        <span className="brand-name">TaskHive</span>
+                        <span className="brand-name">R-Task</span>
                         <span className="brand-badge">ADMIN</span>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ export default function Layout({ children, admin, onLogout }) {
                 <div className="topbar">
                     <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 15, fontWeight: 700 }}>{pageTitle}</div>
-                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>TaskHive Admin Console</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-3)' }}>R-Task Admin Console</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <div className="status-dot dot-green" />

@@ -126,7 +126,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _SettingsTile(
             icon: Icons.info_outline_rounded,
-            label: 'About TaskHive',
+            label: 'About R-Task',
             subtitle: 'Version, licenses and details',
             trailing: const Icon(Icons.chevron_right_rounded, size: 22),
             onTap: () => _showAboutDialog(context),
@@ -134,7 +134,7 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.star_outline_rounded,
             label: 'Rate the App',
-            subtitle: 'Enjoying TaskHive? Leave a review',
+            subtitle: 'Enjoying R-Task? Leave a review',
             trailing: const Icon(Icons.chevron_right_rounded, size: 22),
             onTap: () async {
               final uri = Uri.parse(
@@ -190,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: AppSizes.xxl),
           Center(
             child: Text(
-              'TaskHive v1.0.0',
+              'R-Task v1.0.0',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -464,13 +464,13 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            _helpRow(Icons.email_outlined, 'support@taskhive.app', () async {
-              final uri = Uri.parse('mailto:support@taskhive.app');
+            _helpRow(Icons.email_outlined, 'support@r-task.online', () async {
+              final uri = Uri.parse('mailto:support@r-task.online');
               if (await canLaunchUrl(uri)) launchUrl(uri);
             }),
             const SizedBox(height: 8),
-            _helpRow(Icons.language_rounded, 'taskhive.app/help', () async {
-              final uri = Uri.parse('https://taskhive.app/help');
+            _helpRow(Icons.language_rounded, 'r-task.online', () async {
+              final uri = Uri.parse('https://r-task.online');
               if (await canLaunchUrl(uri))
                 launchUrl(uri, mode: LaunchMode.externalApplication);
             }),
@@ -510,7 +510,7 @@ class SettingsScreen extends ConsumerWidget {
   void _showAboutDialog(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'TaskHive',
+      applicationName: 'R-Task',
       applicationVersion: '1.0.0',
       applicationIcon: Container(
         width: 56,
@@ -521,11 +521,11 @@ class SettingsScreen extends ConsumerWidget {
         ),
         child: const Icon(Icons.hive_rounded, color: Colors.white, size: 30),
       ),
-      applicationLegalese: '© 2025 TaskHive. All rights reserved.',
+      applicationLegalese: '© 2026 R-Task. All rights reserved.',
       children: const [
         SizedBox(height: 12),
         Text(
-          'TaskHive is a premium task management app designed to help students and teams stay organised, productive, and on track.',
+          'R-Task is a premium task management app designed to help students and teams stay organised, productive, and on track.',
           style: TextStyle(height: 1.5),
         ),
       ],

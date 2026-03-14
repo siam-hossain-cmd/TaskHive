@@ -1,7 +1,7 @@
 class AppStrings {
   AppStrings._();
 
-  static const appName = 'TaskHive';
+  static const appName = 'R-Task';
   static const appTagline = 'Collaborate. Organize. Achieve.';
 
   // Auth

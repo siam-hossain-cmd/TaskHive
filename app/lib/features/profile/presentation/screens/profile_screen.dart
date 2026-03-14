@@ -135,6 +135,83 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _editName(String currentName) async {
+    final controller = TextEditingController(text: currentName);
+    
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surfaceColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Edit Name', style: TextStyle(color: AppColors.textPrimary)),
+        content: TextField(
+          controller: controller,
+          style: TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Enter your new name',
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary),
+            ),
+          ),
+          textCapitalization: TextCapitalization.words,
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty) {
+                Navigator.pop(ctx, text);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName != currentName) {
+      try {
+        await ref.read(authRepositoryProvider).updateDisplayName(newName);
+        ref.invalidate(userProfileProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Name updated successfully!'),
+              backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to update name: $e'),
+              backgroundColor: AppColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(userProfileProvider);
@@ -306,13 +383,34 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                       SizedBox(height: 14),
-                      Text(
-                        user.displayName,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            user.displayName,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => _editName(user.displayName),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.edit_rounded,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 4),
                       Text(

@@ -132,6 +132,15 @@ class AuthRepository {
     await currentUser!.updatePhotoURL(photoUrl);
   }
 
+  // Update display name
+  Future<void> updateDisplayName(String newName) async {
+    if (currentUser == null) return;
+    await _firestore.collection('users').doc(currentUser!.uid).update({
+      'displayName': newName,
+    });
+    await currentUser!.updateDisplayName(newName);
+  }
+
   // Find user by unique ID
   Future<UserModel?> findUserByUniqueId(String uniqueId) async {
     final query = await _firestore
